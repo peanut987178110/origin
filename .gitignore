@@ -1,5 +1,6 @@
 # 构建产物与本地生成物
 android/app/build/
+android/app/.cxx/
 android/.gradle/
 android/local.properties
 android/.cxx/
