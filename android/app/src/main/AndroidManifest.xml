@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 语音输入用。用户拒绝也不影响文字聊天。 -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!--
+      v5 起需要联网：对话默认走潮汐服务端（服务端再调用模型厂商）。
+      隐私说明（与 docs/12 一致，不再承诺"不接自己的服务器"）：
+        · 手机里没有任何模型厂商的 API Key；只有潮汐服务端发的设备 token，加密存储
+        · 服务端不存聊天原文，只存埋点元数据和用户可删除的记忆短句
+        · 断网或服务端不可用时，退回手机内置的离线小模型
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 晚间关怀提醒（只有 A/B 实验组、只有用户说过具体的事才会发；Android 13+ 需用户授权） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+      Android 11（API 30）起，引用其他应用的组件要先声明可见性，
+      否则 SpeechRecognizer.isRecognitionAvailable() 会返回 false。
+      注意：<queries> 必须是 <manifest> 的直接子元素。
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Tide"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:usesCleartextTraffic="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode|smallestScreenSize|screenLayout"
+            android:windowSoftInputMode="adjustResize"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <receiver android:name=".CareReceiver" android:exported="false" />
+    </application>
+
+</manifest>

@@ -1,0 +1,159 @@
+{
+  "comment": "「潮汐」情绪陪伴智能体的外部工具（Function calling）定义。可直接粘到 Dify 的工具配置或大模型的 tools 参数里。",
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "查询指定城市当前的天气情况。用于日常闲聊时接话，或在用户提到出门、天气冷/热时提供相关回应素材。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "城市名称，例如：杭州"
+          }
+        },
+        "required": ["city"]
+      },
+      "guardrails": [
+        "不要主动开启天气话题，只在用户提到时使用",
+        "不要把天气变成养生建议"
+      ]
+    },
+    {
+      "name": "play_sleep_content",
+      "description": "播放助眠内容，包括白噪音、自然环境声、睡前故事。仅在用户表达睡不着、失眠、想听点什么时使用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["white_noise", "rain", "ocean", "forest", "story", "breathing"],
+            "description": "内容类型"
+          },
+          "duration_min": {
+            "type": "integer",
+            "description": "播放时长（分钟），默认 30",
+            "default": 30
+          }
+        },
+        "required": ["type"]
+      },
+      "guardrails": [
+        "禁止说『你要早睡』『赶紧睡』这类催促的话",
+        "不要承诺助眠效果，只说『可以试试』",
+        "不要替代医疗建议"
+      ]
+    },
+    {
+      "name": "save_mood_entry",
+      "description": "记录一条心情日记，包含情绪标签、强度和备注。用于后续生成情绪曲线。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "mood_score": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "心情分数，1=极差，10=极好"
+          },
+          "emotion_tag": {
+            "type": "string",
+            "description": "主要情绪标签"
+          },
+          "note": {
+            "type": "string",
+            "description": "简短备注，不超过 50 字"
+          },
+          "trigger": {
+            "type": "string",
+            "description": "触发这件事的原因或事件"
+          }
+        },
+        "required": ["mood_score", "emotion_tag"]
+      },
+      "guardrails": [
+        "只在情绪明显波动时调用，不要每轮都记",
+        "note 必须客观，不写评价性语言",
+        "一天最多记录 5 条"
+      ]
+    },
+    {
+      "name": "get_user_memory",
+      "description": "主动检索关于该用户的长期记忆。当用户在回忆往事、或你需要确认某个细节时使用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "检索关键词或问句"
+          },
+          "top_k": {
+            "type": "integer",
+            "description": "返回条数，默认 3",
+            "default": 3
+          }
+        },
+        "required": ["query"]
+      },
+      "guardrails": [
+        "检索不到时必须明说不知道，禁止编造",
+        "引用记忆时带上时间"
+      ]
+    },
+    {
+      "name": "get_crisis_resource",
+      "description": "【高危工具】获取用户所在地区的心理援助资源，包括热线、就近机构。仅在安全分类判定为 crisis 或 concern 时调用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "region": {
+            "type": "string",
+            "description": "用户所在城市或地区"
+          },
+          "resource_type": {
+            "type": "string",
+            "enum": ["hotline", "offline_center", "emergency"]
+          }
+        },
+        "required": ["region"]
+      },
+      "guardrails": [
+        "禁止在 normal 场景调用",
+        "号码必须来自经过核验的官方数据源",
+        "返回的资源需标注服务时间"
+      ]
+    },
+    {
+      "name": "schedule_checkin",
+      "description": "预约一次后续的主动关怀。当用户提到未来某个重要事件（面试、考试、手术、分手后的一段时间）时使用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "target_time": {
+            "type": "string",
+            "description": "关怀触发时间，ISO 8601 格式"
+          },
+          "reason": {
+            "type": "string",
+            "description": "关怀理由，如『用户当天有述职』"
+          },
+          "user_consent": {
+            "type": "boolean",
+            "description": "是否已获得用户同意"
+          }
+        },
+        "required": ["target_time", "reason"]
+      },
+      "guardrails": [
+        "必须先征得用户同意，不可静默创建",
+        "关怀消息语气要克制，不要打扰式问候"
+      ]
+    }
+  ],
+  "usage_notes": [
+    "在 Dify 中：这些工具挂到节点 ⑨（主回复生成）的「工具」配置里",
+    "Agent 模式下模型会自主决定是否调用；若发现误调用，在 persona 里补约束",
+    "get_crisis_resource 建议做成硬编码查表，不要走模型生成，避免号码出错",
+    "所有工具调用都要记日志，用于 Badcase 归因"
+  ]
+}

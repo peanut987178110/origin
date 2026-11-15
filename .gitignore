@@ -1,0 +1,36 @@
+# 构建产物与本地生成物
+android/app/build/
+android/.gradle/
+android/local.properties
+android/.cxx/
+.gradle/
+build/
+*.iml
+.idea/
+
+# 大文件：安装包与模型（单文件上限 100 MB，GitHub 放不下）
+dist/
+android/app/src/main/assets/models/
+android/llama.cpp/models/
+
+# 测试输出（截图与日志，跑 E2E 会重新生成）
+tests_out/
+*.log
+
+# 依赖
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+
+# 本地临时文件
+*.tmp
+care-test-output.txt

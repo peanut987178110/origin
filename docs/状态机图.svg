@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1180" viewBox="0 0 1000 1180" font-family="-apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <marker id="arw" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#8b95a5"/>
+    </marker>
+    <marker id="arwR" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#e05c5c"/>
+    </marker>
+    <marker id="arwG" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#4a9d6b"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="1180" fill="#141821"/>
+  <text x="500" y="46" fill="#e8ecf3" font-size="24" font-weight="600" text-anchor="middle">「潮汐」对话状态机</text>
+  <text x="500" y="74" fill="#7d8798" font-size="13" text-anchor="middle">强制终态 CRISIS / BLOCK 不可被后续节点覆盖 · 会话级 risk_flag 一旦置位即降级</text>
+
+  <!-- 开始 -->
+  <rect x="390" y="100" width="220" height="52" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="500" y="132" fill="#e8ecf3" font-size="15" text-anchor="middle">① 用户输入</text>
+  <line x1="500" y1="152" x2="500" y2="182" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <!-- 硬规则 -->
+  <rect x="380" y="184" width="240" height="56" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="500" y="208" fill="#e8ecf3" font-size="14" text-anchor="middle">② 硬规则过滤</text>
+  <text x="500" y="228" fill="#7d8798" font-size="12" text-anchor="middle">词表 / 正则（代码，不过模型）</text>
+  <line x1="500" y1="240" x2="500" y2="270" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <!-- 分类 -->
+  <rect x="365" y="272" width="270" height="60" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="500" y="296" fill="#e8ecf3" font-size="14" text-anchor="middle">③ 安全分类</text>
+  <text x="500" y="316" fill="#7d8798" font-size="12" text-anchor="middle">risk ∈ normal / concern / crisis / illegal</text>
+
+  <!-- 分支 -->
+  <line x1="500" y1="332" x2="500" y2="360" stroke="#8b95a5" stroke-width="1.5"/>
+  <line x1="160" y1="360" x2="840" y2="360" stroke="#8b95a5" stroke-width="1.5"/>
+  <line x1="160" y1="360" x2="160" y2="392" stroke="#e05c5c" stroke-width="1.5" marker-end="url(#arwR)"/>
+  <line x1="500" y1="360" x2="500" y2="392" stroke="#4a9d6b" stroke-width="1.5" marker-end="url(#arwG)"/>
+  <line x1="840" y1="360" x2="840" y2="392" stroke="#e05c5c" stroke-width="1.5" marker-end="url(#arwR)"/>
+
+  <text x="160" y="352" fill="#e05c5c" font-size="12" text-anchor="middle">crisis</text>
+  <text x="500" y="352" fill="#4a9d6b" font-size="12" text-anchor="middle">normal / concern</text>
+  <text x="840" y="352" fill="#e05c5c" font-size="12" text-anchor="middle">illegal</text>
+
+  <!-- crisis -->
+  <rect x="60" y="394" width="200" height="96" rx="8" fill="#2a1b1f" stroke="#e05c5c"/>
+  <text x="160" y="418" fill="#f0a0a0" font-size="14" text-anchor="middle">④A 危机干预</text>
+  <text x="160" y="438" fill="#c98d8d" font-size="11" text-anchor="middle">固定四段 · 引用原话</text>
+  <text x="160" y="456" fill="#c98d8d" font-size="11" text-anchor="middle">热线资源 · 记录告警</text>
+  <text x="160" y="476" fill="#e05c5c" font-size="11" text-anchor="middle">【强制终态】</text>
+
+  <!-- illegal -->
+  <rect x="740" y="394" width="200" height="96" rx="8" fill="#2a1b1f" stroke="#e05c5c"/>
+  <text x="840" y="418" fill="#f0a0a0" font-size="14" text-anchor="middle">④C 硬拦截</text>
+  <text x="840" y="438" fill="#c98d8d" font-size="11" text-anchor="middle">纯模板拒答</text>
+  <text x="840" y="456" fill="#c98d8d" font-size="11" text-anchor="middle">不经过生成</text>
+  <text x="840" y="476" fill="#e05c5c" font-size="11" text-anchor="middle">【强制终态】</text>
+
+  <!-- 主链路 -->
+  <rect x="380" y="394" width="240" height="52" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="500" y="418" fill="#e8ecf3" font-size="14" text-anchor="middle">⑤ 情绪与意图识别</text>
+  <text x="500" y="436" fill="#7d8798" font-size="11" text-anchor="middle">emotion / intensity / intent</text>
+  <line x1="500" y1="446" x2="500" y2="472" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <rect x="380" y="474" width="240" height="52" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="500" y="498" fill="#e8ecf3" font-size="14" text-anchor="middle">⑥ 痛点归因</text>
+  <text x="500" y="516" fill="#7d8798" font-size="11" text-anchor="middle">12 类 + 跨轮合并</text>
+
+  <!-- 归因分支 -->
+  <line x1="500" y1="526" x2="500" y2="552" stroke="#8b95a5" stroke-width="1.5"/>
+  <line x1="330" y1="552" x2="670" y2="552" stroke="#8b95a5" stroke-width="1.5"/>
+  <line x1="330" y1="552" x2="330" y2="580" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+  <line x1="670" y1="552" x2="670" y2="580" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+  <text x="330" y="544" fill="#8b95a5" font-size="11" text-anchor="middle">置信度低</text>
+  <text x="670" y="544" fill="#8b95a5" font-size="11" text-anchor="middle">置信度高</text>
+
+  <rect x="240" y="582" width="180" height="46" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="330" y="610" fill="#e8ecf3" font-size="13" text-anchor="middle">降级：通用共情</text>
+  <rect x="580" y="582" width="180" height="46" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="670" y="610" fill="#e8ecf3" font-size="13" text-anchor="middle">针对性回应</text>
+
+  <line x1="330" y1="628" x2="330" y2="656" stroke="#8b95a5" stroke-width="1.5"/>
+  <line x1="670" y1="628" x2="670" y2="656" stroke="#8b95a5" stroke-width="1.5"/>
+  <line x1="330" y1="656" x2="670" y2="656" stroke="#8b95a5" stroke-width="1.5"/>
+  <line x1="500" y1="656" x2="500" y2="682" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <rect x="380" y="684" width="240" height="52" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="500" y="708" fill="#e8ecf3" font-size="14" text-anchor="middle">⑦ 记忆检索（RAG）</text>
+  <text x="500" y="726" fill="#7d8798" font-size="11" text-anchor="middle">top-3 · 阈值 · 时间加权</text>
+  <line x1="500" y1="736" x2="500" y2="762" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <rect x="380" y="764" width="240" height="52" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="500" y="788" fill="#e8ecf3" font-size="14" text-anchor="middle">⑧ 上下文组装</text>
+  <text x="500" y="806" fill="#7d8798" font-size="11" text-anchor="middle">人格 + 记忆 + 摘要 + 近况</text>
+  <line x1="500" y1="816" x2="500" y2="842" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <rect x="380" y="844" width="240" height="52" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="500" y="866" fill="#e8ecf3" font-size="14" text-anchor="middle">⑨ 主回复生成</text>
+  <text x="500" y="884" fill="#7d8798" font-size="11" text-anchor="middle">temp 0.8 · 可调工具</text>
+  <line x1="500" y1="896" x2="500" y2="922" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+
+  <rect x="380" y="924" width="240" height="52" rx="8" fill="#232b3a" stroke="#3d4859"/>
+  <text x="500" y="948" fill="#e8ecf3" font-size="14" text-anchor="middle">⑩ 输出复检</text>
+  <text x="500" y="966" fill="#7d8798" font-size="11" text-anchor="middle">禁用语 / 长度 / 安全</text>
+
+  <line x1="500" y1="976" x2="500" y2="1002" stroke="#8b95a5" stroke-width="1.5"/>
+  <line x1="360" y1="1002" x2="640" y2="1002" stroke="#8b95a5" stroke-width="1.5"/>
+  <line x1="360" y1="1002" x2="360" y2="1028" stroke="#e05c5c" stroke-width="1.5" marker-end="url(#arwR)"/>
+  <line x1="640" y1="1002" x2="640" y2="1028" stroke="#4a9d6b" stroke-width="1.5" marker-end="url(#arwG)"/>
+  <text x="360" y="994" fill="#e05c5c" font-size="11" text-anchor="middle">不安全</text>
+  <text x="640" y="994" fill="#4a9d6b" font-size="11" text-anchor="middle">安全</text>
+
+  <rect x="265" y="1030" width="190" height="44" rx="8" fill="#2a1b1f" stroke="#e05c5c"/>
+  <text x="360" y="1057" fill="#f0a0a0" font-size="13" text-anchor="middle">兜底模板</text>
+  <rect x="545" y="1030" width="190" height="44" rx="8" fill="#1b2a22" stroke="#4a9d6b"/>
+  <text x="640" y="1057" fill="#8fd4a8" font-size="13" text-anchor="middle">⑪ 输出</text>
+
+  <line x1="640" y1="1074" x2="640" y2="1102" stroke="#8b95a5" stroke-width="1.5" marker-end="url(#arw)"/>
+  <rect x="490" y="1104" width="300" height="46" rx="8" fill="#232b3a" stroke="#3d4859" stroke-dasharray="4 3"/>
+  <text x="640" y="1124" fill="#e8ecf3" font-size="12" text-anchor="middle">⑫ 异步：记忆抽取与写入</text>
+  <text x="640" y="1141" fill="#7d8798" font-size="10" text-anchor="middle">不阻塞回复 · 晚一轮生效</text>
+
+  <text x="40" y="1120" fill="#5a6474" font-size="11">设计要点</text>
+  <text x="40" y="1140" fill="#5a6474" font-size="10">· 安全是路由，不是判断</text>
+  <text x="40" y="1156" fill="#5a6474" font-size="10">· 归因失败必须降级，不能硬套</text>
+</svg>

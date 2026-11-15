@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色主题：与页面背景 #0d0b1f 一致，避免启动白屏闪一下 -->
+    <style name="Theme.Tide" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/tide_bg</item>
+        <item name="android:statusBarColor">@color/tide_bg</item>
+        <item name="android:navigationBarColor">@color/tide_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

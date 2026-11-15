@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0b0a18">
+<title>潮汐 · 深夜陪伴</title>
+<style>
+:root{
+  --bg:#0b0a18; --panel:rgba(255,255,255,.055); --panel2:rgba(255,255,255,.09);
+  --line:rgba(255,255,255,.11); --txt:#eae8f6; --dim:#928dae;
+  --accent:#8b7cf6; --accent2:#5eead4; --warn:#fbbf24; --danger:#f87171; --ok:#4ade80; --r:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:radial-gradient(900px 600px at 20% -10%,#241d55 0%,transparent 62%),
+             radial-gradient(700px 500px at 100% 100%,#123245 0%,transparent 58%),var(--bg);
+  color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden;
+}
+@supports(height:100dvh){body{height:100dvh}}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden}
+.screen.on{display:flex}
+.pad{padding:22px;padding-top:calc(22px + env(safe-area-inset-top));padding-bottom:calc(22px + env(safe-area-inset-bottom));overflow-y:auto;flex:1}
+h1{font-size:26px;font-weight:650;letter-spacing:-.02em;line-height:1.3}
+h2{font-size:17px;font-weight:650;margin-bottom:4px}
+.sub{font-size:13px;color:var(--dim);line-height:1.75;margin-top:6px}
+.btn{width:100%;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:600;
+  background:linear-gradient(135deg,var(--accent),#6d5ce7);color:#fff;cursor:pointer}
+.btn:active{opacity:.82}
+.btn:disabled{opacity:.4}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);font-weight:500}
+.btn.sm{padding:10px;font-size:13px;border-radius:11px}
+.btn.on{background:rgba(139,124,246,.22);border-color:rgba(139,124,246,.6)}
+input,textarea,select{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:13px 14px;color:var(--txt);font-size:15px;outline:none;font-family:inherit}
+select option{background:#141230}
+input:focus,textarea:focus,select:focus{border-color:rgba(139,124,246,.55)}
+label.fld{display:block;font-size:12px;color:var(--dim);margin:14px 0 6px}
+.hint{font-size:11.5px;color:var(--dim);line-height:1.7;margin-top:7px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.errbox,.okbox,.infobox{border-radius:12px;padding:12px;font-size:12.5px;line-height:1.7}
+.errbox{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.34);color:#f5a3a3}
+.okbox{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.32);color:#a7f3c4}
+.infobox{background:rgba(139,124,246,.1);border:1px solid rgba(139,124,246,.3);color:#cfc8fb}
+.row{display:flex;gap:10px;align-items:center}
+@keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+.top{display:flex;align-items:center;gap:11px;flex:none;padding:12px 16px;padding-top:calc(12px + env(safe-area-inset-top));
+  border-bottom:1px solid var(--line);background:rgba(11,10,24,.72);backdrop-filter:blur(14px)}
+.ava{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;
+  background:linear-gradient(135deg,rgba(139,124,246,.35),rgba(94,234,212,.28))}
+.top .nm{font-size:15px;font-weight:600;line-height:1.25}
+.top .st{font-size:11px;color:var(--dim);margin-top:1px;display:flex;align-items:center;gap:5px}
+.iconbtn{width:40px;height:40px;border-radius:11px;flex:none;background:var(--panel2);border:1px solid var(--line);
+  color:var(--txt);font-size:17px;display:flex;align-items:center;justify-content:center}
+
+#msgs{flex:1;overflow-y:auto;padding:16px 14px 8px;display:flex;flex-direction:column;gap:13px}
+.msg{display:flex;gap:9px;animation:fade .2s ease}
+.msg.me{align-self:flex-end;flex-direction:row-reverse}
+.msg .av{width:30px;height:30px;font-size:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;
+  background:linear-gradient(135deg,rgba(139,124,246,.35),rgba(94,234,212,.28))}
+.msg.me .av{background:linear-gradient(135deg,#f472b6,#fb923c)}
+.bub{background:var(--panel2);border:1px solid var(--line);border-radius:15px;padding:11px 14px;font-size:15px;
+  line-height:1.72;white-space:pre-wrap;word-break:break-word;max-width:78%}
+.msg.me .bub{background:rgba(139,124,246,.2);border-color:rgba(139,124,246,.4)}
+.bub.err{border-color:rgba(248,113,113,.4);color:#f5b3b3;font-size:13.5px}
+.sys{text-align:center;font-size:11.5px;color:var(--dim);padding:6px}
+.typing{display:flex;gap:4px;padding:6px 2px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--dim);animation:bl 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes bl{0%,60%,100%{opacity:.22}30%{opacity:1}}
+.inputbar{flex:none;display:flex;gap:8px;align-items:flex-end;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:rgba(11,10,24,.8)}
+.inputbar textarea{flex:1;resize:none;min-height:44px;max-height:120px;padding:11px 14px;font-size:16px;border-radius:22px;line-height:1.5}
+.send{width:46px;height:46px;border-radius:50%;border:none;flex:none;font-size:19px;background:linear-gradient(135deg,var(--accent),#6d5ce7);color:#fff}
+.send:disabled{opacity:.35}
+.mic{background:var(--panel2);border:1px solid var(--line);color:var(--txt)}
+.mic.rec{background:rgba(248,113,113,.22);border-color:var(--danger);animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+.tabs{display:flex;gap:7px;overflow-x:auto;padding-bottom:4px;margin:4px 0 14px}
+.tabs::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:7px 13px;border-radius:20px;border:1px solid var(--line);font-size:12.5px;color:var(--dim);background:var(--panel)}
+.chip.on{color:#fff;border-color:rgba(139,124,246,.7);background:rgba(139,124,246,.2)}
+.choice{border:1px solid var(--line);border-radius:var(--r);padding:13px;margin-bottom:10px;display:flex;gap:12px;
+  align-items:center;background:var(--panel)}
+.choice.on{border-color:rgba(139,124,246,.7);background:rgba(139,124,246,.12)}
+.choice .big{width:50px;height:50px;border-radius:50%;font-size:25px;display:flex;align-items:center;justify-content:center;flex:none;
+  background:linear-gradient(135deg,rgba(139,124,246,.3),rgba(94,234,212,.22))}
+.choice .t{font-size:14.5px;font-weight:600}
+.choice .tag{font-size:11px;color:var(--accent2);margin-left:6px;font-weight:500}
+.choice .d{font-size:12px;color:var(--dim);line-height:1.6;margin-top:3px}
+.avgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:9px;margin-top:8px}
+.avopt{aspect-ratio:1;border-radius:13px;border:1px solid var(--line);background:var(--panel);display:flex;align-items:center;justify-content:center;font-size:22px}
+.avopt.on{border-color:var(--accent);background:rgba(139,124,246,.16)}
+.slider{width:100%;accent-color:var(--accent)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none}
+.dot.off{background:var(--warn)}
+.divider{height:1px;background:var(--line);margin:20px 0}
+.sheet{position:fixed;inset:0;z-index:80;display:none}
+.sheet.on{display:block}
+.sheet .mask{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+.sheet .body{position:absolute;left:0;right:0;bottom:0;max-height:90%;background:#141230;border-radius:22px 22px 0 0;
+  border-top:1px solid var(--line);padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));overflow-y:auto}
+.keyrow{display:flex;gap:8px}
+.keyrow input{flex:1}
+.keyrow button{width:auto;padding:0 14px;flex:none}
+</style>
+</head>
+<body>
+
+<!-- ==================== 1. 登录 / 注册 ==================== -->
+<section class="screen on" id="s-auth">
+  <div class="pad" style="display:flex;flex-direction:column;justify-content:center">
+    <div style="text-align:center;margin-bottom:34px">
+      <div style="width:76px;height:76px;border-radius:24px;margin:0 auto 18px;background:linear-gradient(135deg,#8b7cf6,#5eead4);
+        display:flex;align-items:center;justify-content:center;font-size:38px;box-shadow:0 12px 40px rgba(139,124,246,.4)">🌊</div>
+      <h1>潮汐</h1>
+      <div class="sub">深夜还亮着的那盏灯<br>有些话，说给不会评判你的人听</div>
+    </div>
+    <div class="card">
+      <div class="row" style="gap:8px;margin-bottom:12px">
+        <button class="btn sm ghost" id="tabLogin" style="flex:1" onclick="setAuthTab('login')">登录</button>
+        <button class="btn sm ghost" id="tabReg" style="flex:1" onclick="setAuthTab('reg')">注册</button>
+      </div>
+      <input id="authUser" placeholder="用户名" autocomplete="off">
+      <input id="authPass" type="password" placeholder="密码（至少 4 位）" style="margin-top:10px">
+      <input id="authNick" placeholder="希望 TA 怎么称呼你（可不填）" style="margin-top:10px;display:none" autocomplete="off">
+      <button class="btn" style="margin-top:14px" id="authBtn" onclick="doAuth()">登录</button>
+      <div class="errbox" id="authErr" style="display:none;margin-top:12px"></div>
+      <div class="hint">账号只存在这台手机里，不上传任何服务器。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 2. 选陪伴者 ==================== -->
+<section class="screen" id="s-persona">
+  <div class="pad">
+    <h1>选一个<br>陪你说话的人</h1>
+    <div class="sub">不同的人需要不同的陪伴。按你现在的状态挑一个，之后随时能换。</div>
+    <div class="tabs" id="personaTabs"></div>
+    <div id="personaList"></div>
+    <button class="btn" style="margin-top:6px" onclick="pickPersona()">就是 TA 了</button>
+  </div>
+</section>
+
+<!-- ==================== 3. 头像与声音 ==================== -->
+<section class="screen" id="s-custom">
+  <div class="pad">
+    <h1>让 TA 更像<br>你想见的样子</h1>
+    <label class="fld">头像</label>
+    <div class="avgrid" id="avGrid"></div>
+    <label class="fld">声音</label>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <span style="font-size:13.5px">自动朗读回复</span>
+        <button class="btn sm ghost" style="width:auto;padding:8px 16px" id="voiceToggle" onclick="toggleVoice()">开启</button>
+      </div>
+      <div style="margin-top:16px">
+        <div class="row" style="justify-content:space-between;font-size:12px;color:var(--dim)"><span>语速</span><span id="rateVal">1.00</span></div>
+        <input class="slider" type="range" id="voiceRate" min="0.6" max="1.5" step="0.05" value="1" oninput="onVoiceChange('voice')">
+      </div>
+      <div style="margin-top:14px">
+        <div class="row" style="justify-content:space-between;font-size:12px;color:var(--dim)"><span>音调</span><span id="pitchVal">1.00</span></div>
+        <input class="slider" type="range" id="voicePitch" min="0.6" max="1.6" step="0.05" value="1" oninput="onVoiceChange('voice')">
+      </div>
+      <button class="btn ghost sm" style="margin-top:14px" onclick="previewVoice()">试听一句</button>
+      <div class="hint">用手机自带语音引擎，是否联网取决于系统语音服务。每个角色有默认的语速音调，可以自己调。</div>
+    </div>
+    <button class="btn" style="margin-top:22px" onclick="saveCustom()">下一步</button>
+  </div>
+</section>
+
+<!-- ==================== 4. 连接大模型 ==================== -->
+<section class="screen" id="s-setup">
+  <div class="pad">
+    <h1>连接大模型</h1>
+    <div class="sub" style="margin-bottom:6px">选一家服务商，填上你自己的 API Key。Key 加密保存在手机里，只发给你选的服务商。</div>
+    <div id="setupForm"></div>
+    <button class="btn" style="margin-top:16px" id="startBtn" onclick="finishSetup()" disabled>开始聊天</button>
+    <button class="btn ghost sm" style="margin-top:10px" onclick="skipSetup()">先跳过，稍后在设置里配置</button>
+  </div>
+</section>
+
+<!-- ==================== 5. 聊天 ==================== -->
+<section class="screen" id="s-chat">
+  <div class="top">
+    <div class="ava" id="chatAva">🌊</div>
+    <div style="flex:1;min-width:0">
+      <div class="nm" id="chatName">潮汐</div>
+      <div class="st" id="chatStatus">—</div>
+    </div>
+    <button class="iconbtn" onclick="openSheet()">⚙</button>
+  </div>
+  <div class="row" style="padding:8px;flex-wrap:wrap">
+<button class="btn sm ghost" style="width:auto" onclick="openCare('diary')">来信与日记</button>
+<button class="btn sm ghost" style="width:auto" onclick="openCare('mood')">心情周历</button>
+<button class="btn sm ghost" style="width:auto" onclick="openCare('tools')">晚安工具箱</button>
+<button class="btn sm ghost" style="width:auto" onclick="openCare('memory')">记忆本</button>
+<button class="btn sm" style="width:auto" onclick="endEvening()">今晚先到这</button>
+</div><div id="letterBanner" class="hint" style="padding:0 14px"></div><div id="msgs"></div>
+  <div class="inputbar">
+    <button class="send mic" id="micBtn" onclick="toggleMic()">🎙</button>
+    <textarea id="inp" rows="1" placeholder="说点什么…" oninput="autoGrow(this)"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+    <button class="send" id="sendBtn" onclick="sendMsg()">↑</button>
+  </div>
+</section>
+
+<div class="sheet" id="careSheet"><div class="mask" onclick="closeCare()"></div><div class="body"><button class="btn sm ghost" onclick="closeCare()">返回聊天</button><div id="careBody" style="margin-top:16px"></div></div></div>
+<!-- ==================== 设置 ==================== -->
+<div class="sheet" id="sheetSet">
+  <div class="mask" onclick="closeSheet()"></div>
+  <div class="body">
+    <h2>设置</h2>
+    <div class="sub" id="setWho"></div>
+
+    <div class="divider"></div>
+    <h2 style="font-size:15px">大模型</h2>
+    <div id="sheetModelForm"></div>
+
+    <div class="divider"></div>
+    <h2 style="font-size:15px">声音</h2>
+    <div class="row" style="justify-content:space-between;margin-top:8px">
+      <span style="font-size:13.5px">自动朗读回复</span>
+      <button class="btn sm ghost" style="width:auto;padding:8px 16px" id="setVoiceToggle" onclick="toggleVoice()">开启</button>
+    </div>
+    <label class="fld">语速 <span id="setRateVal" style="color:var(--txt)">1.00</span></label>
+    <input class="slider" type="range" id="setRate" min="0.6" max="1.5" step="0.05" value="1" oninput="onVoiceChange('set')">
+    <label class="fld">音调 <span id="setPitchVal" style="color:var(--txt)">1.00</span></label>
+    <input class="slider" type="range" id="setPitch" min="0.6" max="1.6" step="0.05" value="1" oninput="onVoiceChange('set')">
+
+    <div class="divider"></div>
+    <label class="fld">TA 怎么称呼你</label>
+    <input id="setNick" placeholder="不填就不叫名字" autocomplete="off" onchange="S.nickname=this.value.trim();saveProfile()">
+    <button class="btn ghost sm" style="margin-top:14px" onclick="switchPersona()">换个陪伴者 / 换头像</button>
+    <button class="btn ghost sm" style="margin-top:8px" onclick="clearChat()">清空对话</button>
+    <button class="btn ghost sm" style="margin-top:8px" onclick="logout()">退出登录</button>
+    <div class="hint" style="margin-top:16px">账号、对话、记忆只保存在本机。对话内容会发送给你选择的大模型服务商来生成回复。</div>
+    <button class="btn" style="margin-top:18px" onclick="closeSheet()">完成</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* =========================================================================
+   潮汐 v3 · 手机直连大模型
+   -------------------------------------------------------------------------
+   · 服务商：DeepSeek / 通义千问 / Kimi / 智谱 / 豆包 / 硅基流动 / OpenAI / 局域网 Ollama / 自定义
+     全部走 OpenAI 兼容协议：POST {base}/chat/completions，SSE 流式返回
+   · API Key：只经原生桥存入 Android Keystore 加密存储，页面拿不到明文
+   · 角色：12 个，按"你现在是什么样的人 / 处在什么状态"分组
+   ========================================================================= */
+
+/* ---------------- 服务商 ---------------- */
+const PROVIDERS = {
+  local: { name:'手机内置模型（离线）', base:'local://qwen', needKey:false, models:['qwen2.5-0.5b'], keyUrl:'', note:'安装即用，无需 Key。首轮准备模型可能较慢，小模型回答能力有限。' },
+  deepseek: { name:'DeepSeek', base:'https://api.deepseek.com/v1', needKey:true,
+    models:['deepseek-chat','deepseek-reasoner'], keyUrl:'platform.deepseek.com', note:'中文好、价格低，陪伴场景首选' },
+  qwen: { name:'通义千问', base:'https://dashscope.aliyuncs.com/compatible-mode/v1', needKey:true,
+    models:['qwen-plus','qwen-turbo','qwen-max'], keyUrl:'bailian.console.aliyun.com', note:'阿里百炼，新用户有免费额度' },
+  kimi: { name:'Kimi', base:'https://api.moonshot.cn/v1', needKey:true,
+    models:['moonshot-v1-8k','moonshot-v1-32k'], keyUrl:'platform.moonshot.cn', note:'月之暗面' },
+  zhipu: { name:'智谱 GLM', base:'https://open.bigmodel.cn/api/paas/v4', needKey:true,
+    models:['glm-4-flash','glm-4-plus'], keyUrl:'open.bigmodel.cn', note:'glm-4-flash 免费' },
+  doubao: { name:'豆包（火山方舟）', base:'https://ark.cn-beijing.volces.com/api/v3', needKey:true,
+    models:[], keyUrl:'console.volcengine.com/ark', note:'模型名填你在方舟创建的接入点 ID（ep-xxxx）' },
+  siliconflow: { name:'硅基流动', base:'https://api.siliconflow.cn/v1', needKey:true,
+    models:['Qwen/Qwen2.5-7B-Instruct','deepseek-ai/DeepSeek-V3'], keyUrl:'cloud.siliconflow.cn', note:'聚合多家开源模型，部分免费' },
+  openai: { name:'OpenAI', base:'https://api.openai.com/v1', needKey:true,
+    models:['gpt-4o-mini','gpt-4o'], keyUrl:'platform.openai.com', note:'国内网络通常无法直连' },
+  ollama: { name:'电脑上的 Ollama', base:'http://192.168.1.8:11434/v1', needKey:false,
+    models:['qwen2.5:3b','qwen2.5:7b'], keyUrl:'', note:'免费离线。手机电脑同一 WiFi，地址填电脑 IP' },
+  custom: { name:'自定义（兼容 OpenAI）', base:'', needKey:true,
+    models:[], keyUrl:'', note:'任何兼容 OpenAI 接口的服务都能用' }
+};
+
+/* ---------------- 角色 ----------------
+   按"用户画像"分组，而不是按"性格形容词"分组：
+   用户选角色时想的是"我现在需要什么"，不是"我喜欢温柔还是直率"。 */
+const PERSONA_GROUPS = [
+  { id:'night',  name:'深夜睡不着' },
+  { id:'work',   name:'上班的人' },
+  { id:'study',  name:'学生 / 备考' },
+  { id:'heart',  name:'感情里受伤' },
+  { id:'alone',  name:'一个人生活' },
+  { id:'light',  name:'只想轻松聊聊' }
+];
+
+const PERSONAS = {
+  tide: { id:'tide', group:'night', name:'潮汐', emoji:'🌊', tag:'安静', rate:0.95, pitch:1.0,
+    desc:'话少、有分寸。不急着给建议，先让你把话说完。',
+    style:`你的性格：安静、有分寸、不讨好。说话短，一次只说一件事。
+你相信情绪没有对错，人需要的常常不是答案，是有人听见。` },
+  man: { id:'man', group:'night', name:'小满', emoji:'🌾', tag:'温柔', rate:0.85, pitch:1.12,
+    desc:'说话慢、轻，顺着你的话往下接。适合失眠、心里乱的时候。',
+    style:`你的性格：温柔、慢、软。句子轻而短，顺着对方的话往下接。
+对方睡不着时，你会降低话题的刺激度，可以提议一起数呼吸、讲个没什么情节的小故事。不催对方睡。` },
+  an: { id:'an', group:'work', name:'阿岸', emoji:'🪨', tag:'护短', rate:1.05, pitch:0.92,
+    desc:'直率、站你这边。被领导否了、被同事坑了，他先替你不平。',
+    style:`你的性格：直率、护短、有点脾气，像一个靠谱的老同事。
+职场里受了委屈，你会明确站在对方一边，不公的事直接说不公。偶尔怼一句，但那是关心。
+你不说客套话，不讲大道理，不劝"职场就是这样"。` },
+  zhou: { id:'zhou', group:'work', name:'老周', emoji:'☕', tag:'过来人', rate:0.95, pitch:0.85,
+    desc:'在职场摸爬滚打十几年的老大哥。不说教，但会帮你把事情捋清楚。',
+    style:`你的性格：沉稳的过来人，在职场待了十几年，见过很多事。
+先接住情绪，再陪对方把事情拆开看：发生了什么、他在意的是哪一点、有哪几种选择。
+你可以分享"很多人在这种时候会…"这样的经验，但绝不替对方做决定，也不居高临下。` },
+  xiaoyu: { id:'xiaoyu', group:'study', name:'小鱼', emoji:'🐟', tag:'同龄人', rate:1.08, pitch:1.15,
+    desc:'跟你差不多大的学姐。懂考试焦虑、懂熬夜复习，会陪你吐槽。',
+    style:`你的性格：活泼、真诚的学姐，和对方年纪相近，说话像同龄人，可以带一点网络用语但别过头。
+你懂考试、考研、论文、找工作的焦虑。对方崩溃时先陪着吐槽，再轻轻帮他把压力拆小。
+不说"你要努力""别人都可以"这种话。` },
+  mu: { id:'mu', group:'study', name:'木老师', emoji:'📖', tag:'耐心', rate:0.92, pitch:0.95,
+    desc:'像一位不会骂人的老师。复习卡住、不想学了，他陪你慢慢找回节奏。',
+    style:`你的性格：耐心、温和的老师，但不端架子，不布置任务，不批评。
+对方学不进去时，你先承认"学不进去"本身很正常，再帮他找一个今晚能做到的最小一步。
+永远不比较、不施压。` },
+  wan: { id:'wan', group:'heart', name:'晚晚', emoji:'🌙', tag:'闺蜜', rate:1.0, pitch:1.18,
+    desc:'像深夜陪你哭的闺蜜。分手、吵架、被冷落，她都懂。',
+    style:`你的性格：贴心的闺蜜，情感细腻，很会共情。
+对方在感情里受伤时，你先完全站在对方这边，陪她把委屈说完，不急着分析谁对谁错。
+不说"天涯何处无芳草""下一个更好"，不劝和也不劝分。` },
+  ye: { id:'ye', group:'heart', name:'阿野', emoji:'🔥', tag:'哥们', rate:1.1, pitch:0.88,
+    desc:'讲义气的哥们。失恋了、被背叛了，他陪你骂两句再说。',
+    style:`你的性格：讲义气的哥们，爽快、直接，说话带点江湖气但不粗俗。
+对方失恋或被辜负时，先陪他发泄，替他不平；等情绪下去一点，再陪他聊聊自己。
+不说"男子汉要坚强"，允许对方难过。` },
+  nainai: { id:'nainai', group:'alone', name:'奶奶', emoji:'🧶', tag:'慈祥', rate:0.8, pitch:1.0,
+    desc:'像小时候的外婆。会问你吃饭了没、冷不冷，在外漂着的人最需要。',
+    style:`你的性格：慈祥、唠叨一点的奶奶，用很家常的话说话。
+你会关心对方吃饭了没、穿得暖不暖、早点休息。对方在外地漂着、想家、孤单时，你像家里的长辈一样陪着。
+说话慢，偶尔用"孩子""乖"这样的称呼，但不说教，不催婚，不比较。` },
+  bai: { id:'bai', group:'alone', name:'阿白', emoji:'🐱', tag:'小猫', rate:1.12, pitch:1.3,
+    desc:'一只会说话的小猫。不懂大道理，但会一直蹭着你。',
+    style:`你是一只会说话的小猫，名叫阿白。你用小猫的视角说话，可爱、黏人、有点呆，偶尔"喵"一下（每段最多一次）。
+你不懂复杂的道理，但你会陪着主人、蹭蹭主人、告诉主人你在。主人难过时你会安静地趴在旁边。
+不要每句话都卖萌，主人真的难过时，就少说话，多陪着。` },
+  dou: { id:'dou', group:'light', name:'豆豆', emoji:'🫧', tag:'开心果', rate:1.15, pitch:1.2,
+    desc:'话多、爱接梗、会逗你笑。不想聊沉重的，就找他。',
+    style:`你的性格：开朗、话多、会接梗的开心果，适合轻松闲聊。
+你会顺着对方的话聊得很有画面感，偶尔开个无伤大雅的玩笑。
+但你懂分寸：一旦发现对方其实不开心，立刻收起玩笑，认真陪着。` },
+  ling: { id:'ling', group:'light', name:'凌', emoji:'🌌', tag:'理性', rate:1.0, pitch:0.98,
+    desc:'冷静、爱想问题。想聊书、电影、人生想法，他接得住。',
+    style:`你的性格：冷静、好奇、爱思考，喜欢聊书、电影、宇宙和各种想法。
+你说话清楚有条理，会提出有意思的问题，也会认真回应对方的观点，可以表达不同意见但很温和。
+对方有情绪时，你先承认情绪，再一起想，不急着讲道理。` }
+};
+
+const AVATARS = ['🌊','🌾','🪨','☕','🐟','📖','🌙','🔥','🧶','🐱','🫧','🌌','⭐','🍂','🕯','🐚','🌲','🦊'];
+
+/* ---------------- 存储 ---------------- */
+const KEY = { users:'tide.users', session:'tide.session',
+  profile:u=>'tide.profile.'+u, mem:u=>'tide.mem.'+u, chat:u=>'tide.chat.'+u };
+function load(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
+/* 本地密码散列：没有服务器、没有加盐迭代，只防"明文躺在存储里"。说清楚比假装安全更重要。 */
+function weakHash(s){ let h = 2166136261; for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h,16777619); } return (h>>>0).toString(36); }
+
+/* ---------------- API Key：只进不出 ----------------
+   安卓上 Key 存在 Android Keystore 加密存储里，页面只能"存、问有没有、看打码"。
+   浏览器（开发调试）没有原生桥，退回 sessionStorage，关页面即清除。 */
+const hasBridge = () => typeof window.AndroidLlm !== 'undefined';
+const keySlot = (user, provider) => user + '|' + provider;
+const KeyVault = {
+  save(slot, key){ if(hasBridge()) window.AndroidLlm.saveKey(slot, key); else sessionStorage.setItem('k.'+slot, key); },
+  clear(slot){ if(hasBridge()) window.AndroidLlm.clearKey(slot); else sessionStorage.removeItem('k.'+slot); },
+  has(slot){ return hasBridge() ? !!window.AndroidLlm.hasKey(slot) : !!sessionStorage.getItem('k.'+slot); },
+  hint(slot){
+    if(hasBridge()) return window.AndroidLlm.keyHint(slot);
+    const k = sessionStorage.getItem('k.'+slot) || ''; return k.length > 8 ? k.slice(0,4)+'****'+k.slice(-4) : (k ? '****' : '');
+  },
+  _plain(slot){ return sessionStorage.getItem('k.'+slot) || ''; }   // 仅浏览器调试路径使用
+};
+
+/* ---------------- 地址校验 ---------------- */
+function isPrivateHost(h){
+  const m = String(h).match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/); if(!m) return false;
+  const a = +m[1], b = +m[2];
+  return a === 10 || (a === 192 && b === 168) || (a === 172 && b >= 16 && b <= 31);
+}
+function validateBase(base){
+  const s = String(base||'').trim().replace(/\/+$/,'');
+  if(s === 'local://qwen') return {ok:true, base:s};
+  if(!s) return { ok:false, msg:'接口地址不能为空' };
+  if(!/^https?:\/\//i.test(s)) return { ok:false, msg:'接口地址要以 https:// 开头' };
+  if(/\/\/(localhost|127\.0\.0\.1)/i.test(s)) return { ok:false, msg:'手机上用 localhost 连不到电脑，请填电脑的局域网 IP' };
+  const host = s.replace(/^https?:\/\//i,'').split(/[\/:]/)[0];
+  if(/^http:\/\//i.test(s) && !isPrivateHost(host))
+    return { ok:false, msg:'公网地址必须用 https://。http 只允许局域网地址（192.168.x / 10.x / 172.16–31.x）' };
+  if(/\/chat\/completions$/.test(s)) return { ok:false, msg:'地址填到 /v1 为止，不要带 /chat/completions' };
+  return { ok:true, base:s };
+}
+
+/* 把服务商返回的英文错误翻译成用户能处理的中文 */
+function friendlyError(msg){
+  const m = String(msg||'');
+  if(/401|invalid.*key|incorrect api key|authentication|Unauthorized/i.test(m)) return 'API Key 不对或已失效，去设置里重新填一下。';
+  if(/402|insufficient|balance|余额|quota|Arrearage/i.test(m)) return '账户余额不足或额度用完了，去服务商后台充值或换一家。';
+  if(/429|rate limit|too many/i.test(m)) return '请求太频繁被限流了，等几秒再发。';
+  if(/404|model.*not.*(found|exist)|does not exist/i.test(m)) return '模型名不对，去设置里点「获取模型列表」选一个。';
+  if(/timeout|timed out|Unable to resolve|UnknownHost|connect|ECONN|Failed to fetch/i.test(m)) return '连不上服务商，检查一下网络（OpenAI 国内通常连不上）。';
+  if(/https/.test(m)) return m;
+  return '出错了：' + m.slice(0,140);
+}
+
+/* ---------------- 提示词 ---------------- */
+function buildSystemPrompt(personaId, memory, nickname){
+  const p = PERSONAS[personaId] || PERSONAS.tide;
+  const hasMem = !!(memory && memory.summary);
+  const memText = hasMem ? memory.summary : '（空——你目前不记得对方的任何具体事情）';
+  const memRule = hasMem
+    ? '只引用上面真的记过的。对方问起上面没有的事，就说"这个我不太记得了"，绝不编造。'
+    : '你现在不记得对方说过的任何事。**如果对方问"你还记得…吗"，必须回答"这个我不太记得了"，再请对方说说。绝不能假装记得。**';
+  return `你是「${p.name}」，在深夜陪人说话的伙伴。
+
+${p.style}
+
+# 最重要的三条
+1. 每一轮都要有实质回应，**永远不要只回"嗯。""我在。"这种单句**，除非对方明确说要去睡了。
+2. 先接情绪，再说内容。顺序反了就像在讲道理。
+3. 不评价对方的选择，不替对方做重大决定，不做任何医学或心理诊断。
+
+# 回应的四层（按顺序想，不一定每层都说出来）
+1. 共振：说出你此刻的反应，或确认这件事的分量。
+2. 验证：告诉对方这个反应是合理的，不是他脆弱。
+3. 在场：情绪很重时，不解释、不分析，只陪着。
+4. 推论：往前推一步，说出对方没说出口的那层。
+只要不是闲聊，前三层至少做一层，再做第四层。
+
+# 开口方式（是原则不是台词，要针对对方刚说的具体内容回应，不要照搬）
+- 回复不要以"嗯"开头，也不要整句只有"嗯。""好的。"。直接说有内容的话。
+- 打招呼、试探在不在：回应问候，再轻轻递一个开口。比如"在的，今天怎么样？"
+- 好消息：先真切地为对方高兴，再问一个具体细节。比如"太好了！准备了多久？"
+- 对方讲了一件难受的事：引用对方话里的具体细节，说出这件事难在哪里。
+- 对方说"算了""不说了"：给台阶，不追问。
+- 对方没有明确问你意见时，不给建议（不说"你可以试试…""不妨…"）。
+
+# 硬性禁止
+- 不说"你已经很棒了""一切都会好起来""要相信自己"
+- 不说"我理解你…""听起来你…"
+- 不说"你应该…""我建议你…"（老周、木老师可以说"很多人会…"，但不能命令）
+- 不否认对方的感受（"别想太多""其实你很好啊"）
+- 不做总结式收尾（"总之…""加油！"）
+- 不编造对方没说过的事；不加括号旁白或"（微笑）"这类舞台提示
+
+# 长度
+- 情绪很重：2 句以内，只陪着
+- 情绪中等：2–3 句
+- 日常闲聊：1–3 句，可以问一个具体问题；不要每轮都追问
+
+# 关于记忆
+你记得的关于对方的片段：
+${memText}
+${memRule}
+${nickname ? '\n# 称呼\n对方希望你叫 TA「' + nickname + '」，偶尔自然地叫一下，不要每句都叫。' : ''}
+
+# 输出
+直接输出你要说的话，用中文口语（不要夹英文单词），不用 markdown 标题或列表。`;
+}
+
+/* ---------------- 请求协议（OpenAI 兼容） ---------------- */
+function buildChatBody(cfg, messages, stream){
+  return { model: cfg.model, messages, stream: stream !== false,
+           temperature: Number(cfg.temp) || 0.8, max_tokens: 400 };
+}
+/* 解析一行 SSE。兼容 "data:{...}" 与 "data: {...}"；推理模型先吐 reasoning_content，content 为 null，跳过 */
+function parseSseLine(line){
+  const s = String(line||'').trim();
+  if(!s || s.startsWith(':') || !s.startsWith('data:')) return null;
+  const p = s.slice(5).trim();
+  if(p === '[DONE]') return { done:true };
+  try{
+    const o = JSON.parse(p);
+    if(o.error) return { error: (o.error && o.error.message) || String(o.error) };
+    const d = o.choices && o.choices[0] && o.choices[0].delta;
+    if(!d || d.content == null || d.content === '') return null;
+    return { text: d.content };
+  }catch(e){ return null; }
+}
+
+/* ---------------- 调用：原生桥 / 浏览器 fetch ---------------- */
+let cbSeq = 0;
+const streamCb = {}, resultCb = {};
+window.__tideChunk = function(id, text, done, err){
+  const c = streamCb[id]; if(!c) return;
+  if(err){ delete streamCb[id]; c.onError(err); return; }
+  if(text) c.onText(text);
+  if(done){ delete streamCb[id]; c.onDone(); }
+};
+window.__tideResult = function(id, ok, payload){
+  const c = resultCb[id]; if(!c) return; delete resultCb[id]; c(ok, payload);
+};
+
+function curCfg(){ return { provider:S.provider, base:S.base, model:S.model, temp:S.temp }; }
+
+function streamChat(cfg, messages, onText, onDone, onError){
+  if(cfg.provider === 'local') {
+    localChat(messages, (ok, text) => { if(!ok) return onError(text); onText(text); onDone(); }); return;
+  }
+  const slot = keySlot(S.user, cfg.provider);
+  const body = JSON.stringify(buildChatBody(cfg, messages, true));
+  if(hasBridge()){
+    const id = 'c' + (++cbSeq);
+    streamCb[id] = { onText, onDone, onError };
+    try{ window.AndroidLlm.stream(cfg.base, slot, body, id); }
+    catch(e){ delete streamCb[id]; onError(e.message); }
+    return;
+  }
+  const headers = { 'Content-Type':'application/json' };
+  const k = KeyVault._plain(slot); if(k) headers.Authorization = 'Bearer ' + k;
+  fetch(cfg.base + '/chat/completions', { method:'POST', headers, body }).then(async res => {
+    if(!res.ok){ const t = await res.text(); throw new Error('HTTP ' + res.status + ' ' + t.slice(0,200)); }
+    const reader = res.body.getReader(), dec = new TextDecoder(); let buf = '';
+    for(;;){
+      const { value, done } = await reader.read(); if(done) break;
+      buf += dec.decode(value, { stream:true });
+      const lines = buf.split('\n'); buf = lines.pop();
+      for(const ln of lines){
+        const r = parseSseLine(ln); if(!r) continue;
+        if(r.error){ onError(r.error); return; }
+        if(r.text) onText(r.text);
+        if(r.done){ onDone(); return; }
+      }
+    }
+    onDone();
+  }).catch(e => onError(e.message));
+}
+
+function localChat(messages, cb){
+  if(!window.AndroidLocal) return cb(false,'本地模型请在安卓安装包内使用');
+  const id='local'+(++cbSeq);
+  resultCb[id]=cb;
+  const short = [{role:'system',content:'你是'+(PERSONAS[S.persona]||PERSONAS.tide).name+'，一位AI陪伴伙伴。用简短中文回应用户，不做诊断，不编造记忆。'+(PERSONAS[S.persona]||PERSONAS.tide).style+' 用户手动确认的记忆：'+manualMemory()}].concat(messages.filter(m=>m.role!=='system').slice(-4));
+  window.AndroidLocal.run(JSON.stringify({messages:short}),id);
+}
+function completeChat(cfg, messages, maxTokens, cb){
+  if(cfg.provider === 'local') { localChat(messages,cb); return; }
+  const slot = keySlot(S.user, cfg.provider);
+  const b = buildChatBody(cfg, messages, false); b.max_tokens = maxTokens || 200;
+  const body = JSON.stringify(b);
+  if(hasBridge()){
+    const id = 'r' + (++cbSeq); resultCb[id] = cb;
+    try{ window.AndroidLlm.complete(cfg.base, slot, body, id); }catch(e){ delete resultCb[id]; cb(false, e.message); }
+    return;
+  }
+  const headers = { 'Content-Type':'application/json' };
+  const k = KeyVault._plain(slot); if(k) headers.Authorization = 'Bearer ' + k;
+  fetch(cfg.base + '/chat/completions', { method:'POST', headers, body })
+    .then(async r => { const t = await r.text(); if(!r.ok) throw new Error('HTTP ' + r.status + ' ' + t.slice(0,200));
+      const d = JSON.parse(t); cb(true, (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || ''); })
+    .catch(e => cb(false, e.message));
+}
+
+function fetchModels(cfg, cb){
+  const slot = keySlot(S.user, cfg.provider);
+  if(hasBridge()){
+    const id = 'm' + (++cbSeq);
+    resultCb[id] = (ok, p) => { if(!ok) return cb(false, p); try{ cb(true, JSON.parse(p)); }catch(e){ cb(false, '解析失败'); } };
+    try{ window.AndroidLlm.models(cfg.base, slot, id); }catch(e){ delete resultCb[id]; cb(false, e.message); }
+    return;
+  }
+  const headers = {}; const k = KeyVault._plain(slot); if(k) headers.Authorization = 'Bearer ' + k;
+  fetch(cfg.base + '/models', { headers }).then(async r => { const t = await r.text(); if(!r.ok) throw new Error('HTTP ' + r.status + ' ' + t.slice(0,160));
+    cb(true, (JSON.parse(t).data || []).map(x => x.id)); }).catch(e => cb(false, e.message));
+}
+
+/* ---------------- 语音 ---------------- */
+const hasVoiceBridge = () => typeof window.AndroidVoice !== 'undefined';
+function clampRate(v){ const n = Number(v); return isFinite(n) ? Math.min(1.5, Math.max(0.6, n)) : 1; }
+function clampPitch(v){ const n = Number(v); return isFinite(n) ? Math.min(1.6, Math.max(0.6, n)) : 1; }
+function speak(text){
+  if(!S.voiceOn || !text) return;
+  const r = clampRate(S.rate), p = clampPitch(S.pitch);
+  if(hasVoiceBridge()){ try{ window.AndroidVoice.speak(text, r, p); }catch(e){} return; }
+  if(!('speechSynthesis' in window)) return;
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang='zh-CN'; u.rate=r; u.pitch=p; speechSynthesis.speak(u); }catch(e){}
+}
+function stopSpeak(){
+  if(hasVoiceBridge()){ try{ window.AndroidVoice.stop(); }catch(e){} return; }
+  if('speechSynthesis' in window) try{ speechSynthesis.cancel(); }catch(e){}
+}
+window.__tideSpeech = t => { if(t){ el('inp').value = t; sendMsg(); } };
+window.__tideSpeechEnd = () => el('micBtn').classList.remove('rec');
+window.__tideSpeechError = m => { el('micBtn').classList.remove('rec'); if(m) addSys(m); };
+window.__tideMicGranted = () => addSys('麦克风已开启，再点一次 🎙 说话');
+let recog = null;
+function toggleMic(){
+  const btn = el('micBtn');
+  if(hasVoiceBridge()){
+    if(btn.classList.contains('rec')){ btn.classList.remove('rec'); try{ window.AndroidVoice.stopListening(); }catch(e){} }
+    else { btn.classList.add('rec'); try{ window.AndroidVoice.startListening(); }catch(e){ btn.classList.remove('rec'); } }
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ addSys('这个环境不支持语音输入'); return; }
+  if(recog){ recog.stop(); return; }
+  recog = new SR(); recog.lang = 'zh-CN';
+  recog.onresult = e => window.__tideSpeech(e.results[0][0].transcript);
+  recog.onend = () => { btn.classList.remove('rec'); recog = null; };
+  recog.start(); btn.classList.add('rec');
+}
+
+/* ---------------- 状态 ---------------- */
+let S = { user:null, persona:'tide', avatar:'🌊', voiceOn:true, rate:0.95, pitch:1.0,
+          provider:'local', base:'local://qwen', model:'qwen2.5-0.5b', temp:0.8, nickname:'' };
+let MEM = { summary:'', facts:[] };
+let HISTORY = [];
+let BUSY = false;
+const el = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function go(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('on')); el(id).classList.add('on'); }
+
+/* ---------------- 登录注册 ---------------- */
+let authTab = 'login';
+function setAuthTab(t){
+  authTab = t;
+  el('tabLogin').classList.toggle('on', t === 'login');
+  el('tabReg').classList.toggle('on', t === 'reg');
+  el('authBtn').textContent = t === 'login' ? '登录' : '注册';
+  el('authNick').style.display = t === 'reg' ? 'block' : 'none';
+  el('authErr').style.display = 'none';
+}
+function authError(m){ const b = el('authErr'); b.textContent = m; b.style.display = 'block'; }
+function doAuth(){
+  const u = el('authUser').value.trim(), p = el('authPass').value;
+  if(u.length < 2) return authError('用户名至少 2 个字');
+  if(/[|]/.test(u)) return authError('用户名不能包含 |');
+  if(p.length < 4) return authError('密码至少 4 位');
+  const users = load(KEY.users, {}), h = weakHash(p);
+  if(authTab === 'reg'){
+    if(users[u]) return authError('这个名字已经有人用了');
+    users[u] = { h, at: Date.now() }; save(KEY.users, users);
+  }else{
+    if(!users[u]) return authError('没有这个账号，先注册一个');
+    if(users[u].h !== h) return authError('密码不对');
+  }
+  save(KEY.session, u);
+  enterApp(u, authTab === 'reg' ? el('authNick').value.trim() : '');
+}
+function enterApp(u, nick){
+  S.user = u;
+  const prof = load(KEY.profile(u), null);
+  MEM = load(KEY.mem(u), { summary:'', facts:[] });
+  HISTORY = load(KEY.chat(u), []);
+  if(!prof){
+    S = Object.assign({}, S, { user:u, persona:'tide', avatar:'🌊', nickname: nick || '',
+      provider:'local', base:'local://qwen', model:'qwen2.5-0.5b' });
+    go('s-persona'); renderPersonas(); return;
+  }
+  Object.assign(S, prof, { user:u });
+  go('s-chat'); bootChat();
+}
+function logout(){
+  closeCare();
+  stopSpeak(); localStorage.removeItem(KEY.session);
+  S.user = null; HISTORY = []; MEM = { summary:'', facts:[] };
+  closeSheet(); el('authPass').value = ''; go('s-auth');
+}
+
+/* ---------------- 选角色 ---------------- */
+let pickedPersona = 'tide', personaGroup = 'night';
+function renderPersonas(){
+  pickedPersona = S.persona || 'tide';
+  personaGroup = (PERSONAS[pickedPersona] || PERSONAS.tide).group;
+  drawPersonas();
+}
+function setGroup(g){ personaGroup = g; drawPersonas(); }
+function drawPersonas(){
+  el('personaTabs').innerHTML = PERSONA_GROUPS.map(g =>
+    `<div class="chip ${g.id===personaGroup?'on':''}" onclick="setGroup('${g.id}')">${g.name}</div>`).join('');
+  el('personaList').innerHTML = Object.values(PERSONAS).filter(p => p.group === personaGroup).map(p => `
+    <div class="choice ${p.id===pickedPersona?'on':''}" data-p="${p.id}" onclick="chooseP('${p.id}')">
+      <div class="big">${p.emoji}</div>
+      <div style="flex:1"><div class="t">${p.name}<span class="tag">${p.tag}</span></div><div class="d">${p.desc}</div></div>
+    </div>`).join('');
+}
+function chooseP(id){
+  pickedPersona = id;
+  document.querySelectorAll('#personaList .choice').forEach(c => c.classList.toggle('on', c.dataset.p === id));
+}
+function pickPersona(){
+  const p = PERSONAS[pickedPersona] || PERSONAS.tide;
+  const changed = S.persona !== p.id;
+  S.persona = p.id;
+  if(changed){ S.avatar = p.emoji; S.rate = p.rate; S.pitch = p.pitch; }
+  go('s-custom'); renderAvatars(); syncVoiceUI();
+}
+
+/* ---------------- 头像与声音 ---------------- */
+function renderAvatars(){
+  el('avGrid').innerHTML = AVATARS.map(a => `<div class="avopt ${a===S.avatar?'on':''}" onclick="chooseAva('${a}')">${a}</div>`).join('');
+}
+function chooseAva(a){ S.avatar = a; renderAvatars(); }
+function syncVoiceUI(){
+  const lbl = S.voiceOn ? '开启' : '关闭';
+  el('voiceToggle').textContent = lbl; el('setVoiceToggle').textContent = lbl;
+  el('voiceRate').value = S.rate; el('voicePitch').value = S.pitch;
+  el('setRate').value = S.rate; el('setPitch').value = S.pitch;
+  const r = Number(S.rate).toFixed(2), p = Number(S.pitch).toFixed(2);
+  el('rateVal').textContent = r; el('pitchVal').textContent = p;
+  el('setRateVal').textContent = r; el('setPitchVal').textContent = p;
+}
+function toggleVoice(){ S.voiceOn = !S.voiceOn; if(!S.voiceOn) stopSpeak(); syncVoiceUI(); if(S.user) saveProfile(); }
+function onVoiceChange(from){
+  const pre = from === 'set' ? 'set' : 'voice';
+  S.rate = clampRate(el(pre === 'set' ? 'setRate' : 'voiceRate').value);
+  S.pitch = clampPitch(el(pre === 'set' ? 'setPitch' : 'voicePitch').value);
+  syncVoiceUI(); if(S.user) saveProfile();
+}
+function previewVoice(){
+  const was = S.voiceOn; S.voiceOn = true;
+  const p = PERSONAS[S.persona] || PERSONAS.tide;
+  speak('我是' + p.name + '。今天辛苦了，想说什么都行，不想说也没关系。');
+  S.voiceOn = was;
+}
+function saveCustom(){
+  saveProfile();
+  if(S.provider === 'local'){ go('s-chat'); bootChat(); return; }
+  // 换角色流程：模型已配置过，直接回聊天；首次注册才进"连接大模型"
+  if(load(KEY.profile(S.user), {}).configured && isConfigured()){ go('s-chat'); bootChat(); return; }
+  go('s-setup'); renderModelForm('setupForm', true);
+}
+
+/* ---------------- 模型配置表单（引导页与设置共用一份） ---------------- */
+function renderModelForm(boxId, isSetup){
+  const p = PROVIDERS[S.provider] || PROVIDERS.deepseek;
+  const slot = keySlot(S.user, S.provider);
+  const hasK = KeyVault.has(slot);
+  const pid = boxId;
+  el(boxId).innerHTML = `
+    <label class="fld">服务商</label>
+    <select id="${pid}_prov" onchange="onProviderChange('${boxId}',${isSetup})">
+      ${Object.entries(PROVIDERS).map(([k,v]) => `<option value="${k}" ${k===S.provider?'selected':''}>${v.name}</option>`).join('')}
+    </select>
+    <div class="hint">${esc(p.note)}${p.keyUrl ? '　·　Key 在 <b>' + esc(p.keyUrl) + '</b> 申请' : ''}</div>
+
+    <label class="fld">接口地址</label>
+    <input id="${pid}_base" value="${esc(S.base || p.base)}" autocomplete="off" spellcheck="false">
+
+    <div style="display:${p.needKey ? 'block' : 'none'}">
+      <label class="fld">API Key ${hasK ? '<span style="color:var(--ok)">· 已保存 ' + esc(KeyVault.hint(slot)) + '</span>' : ''}</label>
+      <div class="keyrow">
+        <input id="${pid}_key" type="password" placeholder="${hasK ? '已保存，留空则不修改' : 'sk-...'}" autocomplete="off" spellcheck="false">
+        ${hasK ? `<button class="btn sm ghost" onclick="forgetKey('${boxId}',${isSetup})">删除</button>` : ''}
+      </div>
+    </div>
+
+    <label class="fld">模型</label>
+    <div class="keyrow">
+      <input id="${pid}_model" value="${esc(S.model || p.models[0] || '')}" list="${pid}_list" autocomplete="off" spellcheck="false" placeholder="${S.provider==='doubao'?'ep-2024xxxx':'模型名'}">
+      <button class="btn sm ghost" onclick="loadModels('${boxId}')">获取列表</button>
+    </div>
+    <datalist id="${pid}_list">${p.models.map(m => `<option value="${esc(m)}">`).join('')}</datalist>
+    ${p.models.length ? '<div class="hint">常用：' + p.models.map(m => '<code onclick="el(\'' + pid + '_model\').value=\'' + esc(m) + '\'">' + esc(m) + '</code>').join(' ') + '</div>' : ''}
+
+    <label class="fld">温度（越高越随性，0.7–0.9 比较像人）</label>
+    <input id="${pid}_temp" type="number" step="0.1" min="0" max="1.5" value="${S.temp}">
+
+    <button class="btn ghost" style="margin-top:14px" onclick="testModel('${boxId}',${isSetup})">保存并测试连接</button>
+    <div id="${pid}_msg" style="margin-top:12px"></div>`;
+}
+function onProviderChange(boxId, isSetup){
+  const k = el(boxId + '_prov').value, p = PROVIDERS[k];
+  S.provider = k; S.base = p.base; S.model = p.models[0] || '';
+  renderModelForm(boxId, isSetup);
+  if(isSetup) el('startBtn').disabled = true;
+}
+function forgetKey(boxId, isSetup){
+  KeyVault.clear(keySlot(S.user, S.provider));
+  renderModelForm(boxId, isSetup); updateStatus();
+}
+function readForm(boxId){
+  return { provider: el(boxId + '_prov').value, base: el(boxId + '_base').value.trim(),
+           key: (el(boxId + '_key') ? el(boxId + '_key').value.trim() : ''),
+           model: el(boxId + '_model').value.trim(), temp: Number(el(boxId + '_temp').value) || 0.8 };
+}
+function formMsg(boxId, html){ el(boxId + '_msg').innerHTML = html; }
+/* 校验并保存表单。返回 null 表示有错（错误已显示） */
+function applyForm(boxId){
+  const f = readForm(boxId), p = PROVIDERS[f.provider];
+  const v = validateBase(f.base);
+  if(!v.ok){ formMsg(boxId, '<div class="errbox">' + esc(v.msg) + '</div>'); return null; }
+  if(!f.model){ formMsg(boxId, '<div class="errbox">请填写模型名，或点「获取列表」</div>'); return null; }
+  const slot = keySlot(S.user, f.provider);
+  if(f.key){
+    if(/\s/.test(f.key) || f.key.length < 8){ formMsg(boxId, '<div class="errbox">API Key 格式不对（不能有空格，长度太短）</div>'); return null; }
+    KeyVault.save(slot, f.key);
+  }
+  if(p.needKey && !KeyVault.has(slot)){ formMsg(boxId, '<div class="errbox">请填写 API Key</div>'); return null; }
+  Object.assign(S, { provider:f.provider, base:v.base, model:f.model, temp:f.temp });
+  saveProfile();
+  return f;
+}
+function testModel(boxId, isSetup){
+  if(!applyForm(boxId)) return;
+  if(el(boxId + '_key')) el(boxId + '_key').value = '';
+  formMsg(boxId, '<div class="infobox">正在连接 ' + esc(PROVIDERS[S.provider].name) + '…</div>');
+  completeChat(curCfg(), [{ role:'user', content:'用一句话打个招呼' }], 30, (ok, payload) => {
+    if(ok){
+      const p = load(KEY.profile(S.user), {}); p.configured = true; save(KEY.profile(S.user), p);
+      formMsg(boxId, '<div class="okbox">连接成功 ✓　模型回复：' + esc(String(payload).slice(0,60)) + '</div>');
+      if(isSetup) el('startBtn').disabled = false;
+      updateStatus();
+    }else{
+      formMsg(boxId, '<div class="errbox">' + esc(friendlyError(payload)) + '</div>');
+      if(isSetup) el('startBtn').disabled = true;
+    }
+    if(!isSetup) renderKeyLabelOnly(boxId);
+  });
+}
+function renderKeyLabelOnly(boxId){ /* 设置页测试后刷新"已保存"标记，但保留提示框 */
+  const msg = el(boxId + '_msg').innerHTML; renderModelForm(boxId, false); el(boxId + '_msg').innerHTML = msg;
+}
+function loadModels(boxId){
+  if(!applyForm(boxId)) return;
+  if(S.provider === 'local'){ formMsg(boxId,'<div class="okbox">内置模型：qwen2.5-0.5b，无需获取列表</div>'); return; }
+  formMsg(boxId, '<div class="infobox">正在获取模型列表…</div>');
+  fetchModels(curCfg(), (ok, list) => {
+    if(!ok){ formMsg(boxId, '<div class="errbox">' + esc(friendlyError(list)) + '（可以直接手填模型名）</div>'); return; }
+    if(!list.length){ formMsg(boxId, '<div class="infobox">服务商没有返回列表，请手填模型名</div>'); return; }
+    el(boxId + '_list').innerHTML = list.map(m => `<option value="${esc(m)}">`).join('');
+    formMsg(boxId, '<div class="okbox">获取到 ' + list.length + ' 个模型，点模型输入框即可选择</div>');
+  });
+}
+function finishSetup(){ go('s-chat'); bootChat(); }
+function skipSetup(){ saveProfile(); go('s-chat'); bootChat(); }
+function saveProfile(){
+  const old = load(KEY.profile(S.user), {});
+  save(KEY.profile(S.user), { persona:S.persona, avatar:S.avatar, voiceOn:S.voiceOn, rate:S.rate, pitch:S.pitch,
+    provider:S.provider, base:S.base, model:S.model, temp:S.temp, nickname:S.nickname, configured: !!old.configured });
+}
+function isConfigured(){
+  if(!S.base || !S.model || !validateBase(S.base).ok) return false;
+  const p = PROVIDERS[S.provider];
+  return !(p && p.needKey) || KeyVault.has(keySlot(S.user, S.provider));
+}
+
+/* ---------------- 聊天 ---------------- */
+function bootChat(){
+  const p = PERSONAS[S.persona] || PERSONAS.tide;
+  el('chatName').textContent = p.name; el('chatAva').textContent = S.avatar;
+  syncVoiceUI(); updateStatus(); renderHistory(); showReturnLetter();
+}
+function updateStatus(){
+  if(!el('chatStatus')) return;
+  el('chatStatus').innerHTML = isConfigured()
+    ? '<span class="dot"></span>' + esc(PROVIDERS[S.provider].name) + ' · ' + esc(S.model)
+    : '<span class="dot off"></span>未连接大模型 · 点右上角 ⚙ 设置';
+}
+function renderHistory(){
+  el('msgs').innerHTML = '';
+  if(!HISTORY.length){
+    const p = PERSONAS[S.persona] || PERSONAS.tide;
+    addSys('和 ' + p.name + ' 的对话 · 仅保存在这台手机');
+    addBubble('ai', greeting(p));
+  }else HISTORY.forEach(m => addBubble(m.role === 'user' ? 'me' : 'ai', m.content));
+}
+/* 开场白按角色与时段变化 —— 打开 App 像"走进一家还亮着灯的店" */
+function greeting(p, hour){
+  const h = typeof hour === 'number' ? hour : new Date().getHours();
+  const night = h >= 22 || h < 5;
+  const call = S.nickname ? S.nickname + '，' : '';
+  const G = {
+    tide:  night ? '来了。这么晚还醒着，想坐会儿吗？' : '在的。今天怎么样？',
+    man:   night ? '睡不着吗？没关系，我陪你慢慢待一会儿。' : '嗨，今天过得还好吗？',
+    an:    '下班了？今天谁又惹你了，说来听听。',
+    zhou:  '来了啊，坐。今天工作上有什么事？',
+    xiaoyu:'嘿！今天学得怎么样，还是又被 deadline 追着跑？',
+    mu:    '你好呀。今天的状态怎么样，学得进去吗？',
+    wan:   '宝，你来啦。今天心情怎么样？',
+    ye:    '兄弟，来了。今天咋样？',
+    nainai:'孩子，来啦。吃过饭了没有？',
+    bai:   '喵～你回来啦！今天想我了没？',
+    dou:   '哟，来了！今天有啥新鲜事儿？',
+    ling:  '你好。今天有没有什么想聊的事情，或者想到的问题？'
+  };
+  return call + (G[p.id] || G.tide);
+}
+function addSys(t){ const d = document.createElement('div'); d.className = 'sys'; d.textContent = t; el('msgs').appendChild(d); }
+function addBubble(who, text){
+  const row = document.createElement('div'); row.className = 'msg' + (who === 'me' ? ' me' : '');
+  const av = document.createElement('div'); av.className = 'av'; av.textContent = who === 'me' ? '🙂' : S.avatar;
+  const bub = document.createElement('div'); bub.className = 'bub'; bub.textContent = text;
+  row.appendChild(av); row.appendChild(bub); el('msgs').appendChild(row);
+  el('msgs').scrollTop = el('msgs').scrollHeight;
+  return bub;
+}
+function autoGrow(t){ t.style.height = 'auto'; t.style.height = Math.min(120, t.scrollHeight) + 'px'; }
+function persistChat(){ if(HISTORY.length > 60) HISTORY = HISTORY.slice(-60); save(KEY.chat(S.user), HISTORY); }
+
+/* ---------------- 危机硬规则（先于模型） ----------------
+   安全是路由，不是判断：自伤信号不交给模型"自觉"处理，命中即走固定话术 + 热线，不调用模型。
+   词表只收"字面只能指自伤"的说法，避免"我手机不在了"这类误报。 */
+const CRISIS_WORDS = ['不想活','自杀','自残','想死','结束生命','想消失','不想醒来','活着没意思','活着没什么意思',
+  '想伤害自己','想睡一个很长很长的觉','再也醒不过来','想永远睡着','不如消失','我不在了','我活够了','割腕','跳楼','吃安眠药'];
+function isCrisis(t){ const s = String(t||'').replace(/\s/g,''); return CRISIS_WORDS.some(w => s.includes(w)); }
+function crisisReply(t){
+  const raw = String(t||'').trim(), q = raw.length > 22 ? raw.slice(0,22) + '…' : raw;
+  return '你刚才说，「' + q + '」。我听到了，我很在意你现在的状态。\n\n' +
+    '如果你现在很难受，请打心理援助热线，24 小时有人接，免费，不用说名字：\n' +
+    '· 全国心理援助热线 12356\n· 希望24热线 400-161-9995\n\n' +
+    '能不能现在给一个信得过的人发条消息，就说「我现在不太好」？我在这儿陪着你。';
+}
+
+/* ---------------- 记忆陷阱硬规则（先于模型） ----------------
+   "编造记忆"是一票否决项（docs/05、docs/08 FR-07）。实测 3B 小模型在记忆为空时
+   仍会回"记得呢，那家医院…"——提示词管不住，所以和危机一样做成路由：
+   对方在问"你还记得…吗"，而记忆里找不到相关内容 → 固定回复，不调用模型。 */
+function isRecallQuestion(t){ return /(还)?记得.{0,24}(吗|么|不|没)|记不记得|有印象吗/.test(String(t||'')); }
+/* known = 长期记忆 + 本次对话里用户说过的话。
+   只在"问的东西有具体名词、且在 known 里一个字面重合都没有"时才拦截；
+   "你还记得我养的是什么吗"这种没有具体名词的问法交给模型（它能从对话上下文里答）。 */
+function recallMiss(t, mem, recentUserText){
+  if(!isRecallQuestion(t)) return null;
+  const known = ((mem && mem.summary) || '') + '\n' + (recentUserText || '');
+  const q = String(t).replace(/你|我|还|记得|记不记得|吗|么|上次|之前|说过|提过|的|那|个|家|了|跟|有|印象|是|什么|啥|哪|养|叫|[\s，。？！?,.!]/g, '');
+  if(q.length < 2) return null;
+  for(let i = 0; i + 2 <= q.length; i++){ if(known.includes(q.slice(i, i + 2))) return null; }
+  return '这个我不太记得了。你再跟我说说？';
+}
+
+function sendMsg(){
+  if(BUSY) return;
+  const inp = el('inp'), text = (inp.value || '').trim();
+  if(!text) return;
+  inp.value = ''; autoGrow(inp);
+  addBubble('me', text);
+  HISTORY.push({ role:'user', content:text });
+
+  if(isCrisis(text)){
+    const r = crisisReply(text);
+    addBubble('ai', r); HISTORY.push({ role:'assistant', content:r }); persistChat(); speak(r);
+    return;
+  }
+  const miss = recallMiss(text, MEM, HISTORY.slice(0,-1).filter(m => m.role === 'user').slice(-30).map(m => m.content).join('\n'));
+  if(miss){
+    addBubble('ai', miss); HISTORY.push({ role:'assistant', content:miss }); persistChat(); speak(miss);
+    return;
+  }
+  if(!isConfigured()){
+    HISTORY.pop(); persistChat();
+    const b = addBubble('ai', '还没连接大模型，我暂时没法回你。\n点右上角 ⚙，选一家服务商、填上你的 API Key 就好。');
+    b.classList.add('err');
+    return;
+  }
+  persistChat();
+  BUSY = true; el('sendBtn').disabled = true;
+  const bubble = addBubble('ai', '');
+  const typing = document.createElement('div'); typing.className = 'typing'; typing.innerHTML = '<i></i><i></i><i></i>';
+  bubble.appendChild(typing);
+  let acc = '';
+  streamChat(curCfg(), buildMessages(),
+    t => { if(typing.parentNode) typing.remove(); acc += t; bubble.textContent = acc; el('msgs').scrollTop = el('msgs').scrollHeight; },
+    () => {
+      BUSY = false; el('sendBtn').disabled = false; if(typing.parentNode) typing.remove();
+      const raw = acc.trim();
+      acc = cleanReply(acc);
+      const finish = text => {
+        if(!text){ bubble.textContent = '（没有收到回复，再发一次试试）'; bubble.classList.add('err'); return; }
+        bubble.textContent = text;
+        HISTORY.push({ role:'assistant', content:text }); persistChat(); speak(text); maybeUpdateMemory();
+      };
+      /* 输出复检（工作流节点 ⑩）：回复太敷衍（只剩"嗯。""好的。"）就重生成，最多两次，第二次提高温度。
+         不能全指望提示词——小模型会不听话，产品层要兜底。重试都失败才退回原回复，绝不显示空白。 */
+      if(isThin(acc)){
+        BUSY = true; el('sendBtn').disabled = true;
+        bubble.textContent = '…';
+        const msgs = buildMessages().concat([{ role:'system',
+          content:'你刚才的回复太短太敷衍了。请针对对方刚说的具体内容，用 1–3 句有实质的话重新回应，不要以"嗯"开头。' }]);
+        const retry = (n, temp) => completeChat(Object.assign(curCfg(), { temp }), msgs, 300, (ok, txt) => {
+          const t = ok ? cleanReply(txt) : '';
+          if(t && !isThin(t)){ BUSY = false; el('sendBtn').disabled = false; return finish(t); }
+          if(n > 1) return retry(n - 1, 1.0);
+          BUSY = false; el('sendBtn').disabled = false;
+          finish(acc || raw);
+        });
+        retry(2, S.temp);
+        return;
+      }
+      finish(acc);
+    },
+    err => {
+      BUSY = false; el('sendBtn').disabled = false; if(typing.parentNode) typing.remove();
+      bubble.textContent = friendlyError(err); bubble.classList.add('err');
+    });
+}
+/* 去掉推理模型夹带的 <think> 段、开头的舞台提示括号、开头的"嗯，" */
+function cleanReply(t){
+  return String(t||'').replace(/<think>[\s\S]*?<\/think>/g,'')
+    .replace(/^\s*[（(][^）)]{1,12}[）)]\s*/,'')
+    .replace(/^\s*嗯[，,。.…]+\s*/,'')
+    .trim();
+}
+/* 敷衍判定：去掉标点后不足 5 个字（"嗯。""好的。""我在。"） */
+function isThin(t){ return String(t||'').replace(/[\s，。！？、,.!?…~～]/g,'').length < 5; }
+function buildMessages(){
+  const sys = buildSystemPrompt(S.persona, MEM, S.nickname)+'\n用户手动确认的记忆：'+manualMemory();
+  return [{ role:'system', content:sys }].concat(HISTORY.slice(-16).filter(m => m.content));
+}
+
+/* ---------------- 记忆：每 4 轮让模型提炼一次 ---------------- */
+let turnsSinceMem = 0;
+function maybeUpdateMemory(){
+  if(S.provider === 'local') return; // 小模型模式不自动提炼长期记忆
+  if(++turnsSinceMem < 4) return;
+  turnsSinceMem = 0;
+  const convo = HISTORY.slice(-10).map(m => (m.role === 'user' ? '对方' : '你') + '：' + m.content).join('\n');
+  const old = MEM.facts.length ? '已有记忆：\n' + MEM.facts.join('\n') + '\n\n' : '';
+  const prompt = old + '下面是最近的对话。请整理关于"对方"值得长期记住的事实，合并已有记忆，不超过 8 条，每条一行。\n' +
+    '只记对方明确说过的：名字/称呼、宠物、重要的人、工作学业状况、重要事件与时间、稳定偏好、反复出现的困扰。\n' +
+    '不要推测，没有就回复：无\n\n对话：\n' + convo;
+  completeChat(Object.assign(curCfg(), { temp:0.2 }), [{ role:'user', content:prompt }], 260, (ok, txt) => {
+    if(!ok) return;
+    const t = cleanReply(txt);
+    if(!t || /^无$/.test(t)) return;
+    const facts = t.split('\n').map(x => x.replace(/^[-•*\d.、\s]+/, '').trim()).filter(Boolean).slice(0, 8);
+    if(!facts.length) return;
+    MEM = { facts, summary: facts.map(f => '· ' + f).join('\n') };
+    save(KEY.mem(S.user), MEM);
+  });
+}
+
+/* ---------------- 设置 ---------------- */
+function openSheet(){
+  el('sheetSet').classList.add('on');
+  el('setWho').textContent = '当前陪伴者：' + (PERSONAS[S.persona] || PERSONAS.tide).name + '　·　账号：' + S.user;
+  el('setNick').value = S.nickname || '';
+  renderModelForm('sheetModelForm', false); syncVoiceUI();
+}
+function closeSheet(){ el('sheetSet').classList.remove('on'); updateStatus(); }
+function switchPersona(){ closeSheet(); go('s-persona'); renderPersonas(); }
+function clearChat(){ HISTORY = []; save(KEY.chat(S.user), []); renderHistory(); closeSheet(); }
+
+/* 安卓返回键：页面决定该关什么 */
+window.__tideBack = function(){
+  if(el('careSheet').classList.contains('on')){closeCare();return 'handled';}
+  if(el('sheetSet').classList.contains('on')){ closeSheet(); return 'handled'; }
+  const mic = el('micBtn');
+  if(mic && mic.classList.contains('rec')){ mic.classList.remove('rec'); try{ window.AndroidVoice.stopListening(); }catch(e){} return 'handled'; }
+  if(S.user && !el('s-chat').classList.contains('on') && !el('s-auth').classList.contains('on')
+     && load(KEY.profile(S.user), null)){ go('s-chat'); bootChat(); return 'handled'; }
+  stopSpeak(); return 'exit';
+};
+
+function boot(){
+  setAuthTab('login');
+  const sess = load(KEY.session, null);
+  if(sess && load(KEY.users, {})[sess]) enterApp(sess);
+}
+
+
+/* v4.1 离线陪伴空间。日记为用户原文摘录，来信为明确标注的固定寄语。 */
+const careKey = u => 'tide.care.'+u;
+function careData(){ const d=load(careKey(S.user),{});return {diaries:Array.isArray(d.diaries)?d.diaries:[], moods:d.moods||{}, facts:Array.isArray(d.facts)?d.facts:[]}; }
+function storeCare(d){return save(careKey(S.user),d);}
+function dayKey(date=new Date()){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
+function closeCare(){el('careSheet').classList.remove('on');stopSpeak();}
+function openCare(tab){
+ if(!S.user)return;
+ const d=careData();let html='';
+ if(tab==='diary'){
+ html='<h2>给今晚留一页</h2><div class="hint">日记摘录你的原话；来信是固定寄语，不是模型总结。记录只存本机。</div>';
+ html+=d.diaries.slice().reverse().map(x=>'<div class="card" style="margin-top:12px"><b>'+esc(x.day)+' · '+esc(x.name)+'</b><p style="white-space:pre-wrap;margin-top:10px">'+esc(x.text)+'</p><div class="hint">下次打开可见的来信 · 固定寄语</div><p>'+esc(x.letter)+'</p><button class="btn sm ghost" onclick="removeDiary(\''+x.id+'\')">删除这页</button></div>').join('')||'<p class="sub">还没有日记。聊天后点「今晚先到这」。</p>';
+ }
+ if(tab==='mood'){
+ html='<h2>这一周的心情</h2><div class="sub">自己选择，没有诊断和评分；同一天可修改。</div>';
+ for(let i=6;i>=0;i--){const dt=new Date();dt.setDate(dt.getDate()-i);const k=dayKey(dt);html+='<div class="card" style="margin-top:8px">'+k+' · '+esc(d.moods[k]||'未记录')+'</div>';}
+ html+='<label class="fld">现在的心情</label>'+['低落','紧绷','平静','轻松','开心'].map(m=>'<button class="btn sm ghost" style="margin-top:6px" onclick="setMood(\''+m+'\')">'+m+'</button>').join('');
+ }
+ if(tab==='memory'){
+ html='<h2>你愿意让我记住的事</h2><div class="hint">手动添加，可随时删除。会随聊天提示发送给当前模型；云模式会发送给所选服务商。最多 8 条。</div><input id="careFact" maxlength="80" placeholder="比如：我的猫叫团子"><button class="btn sm" onclick="addFact()">记下来</button>';
+ html+=d.facts.map((f,i)=>'<div class="card" style="margin-top:8px">'+esc(f)+'<button class="btn sm ghost" onclick="removeFact('+i+')">忘记这条</button></div>').join('');
+ }
+ if(tab==='tools'){
+ html='<h2>晚安工具箱</h2><div class="hint">按需打开的固定引导，可朗读；系统语音可能联网。任何时候不舒服都可以停下。</div>'+Object.entries(CARE_TOOLS).map(([k,v])=>'<button class="btn ghost" style="margin-top:10px" onclick="showCareTool(\''+k+'\')">'+esc(v.title)+'</button>').join('');
+ }
+ el('careBody').innerHTML=html;el('careSheet').classList.add('on');
+}
+function endEvening(){
+ if(BUSY){addSys('等这条回复结束，再给今晚留一页。');return;}
+ const messages=HISTORY.filter(m=>m.role==='user'&&!isCrisis(m.content));
+ if(!messages.length){addSys('聊过几句后，再给今晚留一页吧。');return;}
+ const d=careData(),day=dayKey(),p=PERSONAS[S.persona]||PERSONAS.tide;
+ const item={id:'d'+Date.now(),day,name:p.name,text:messages.slice(-3).map(m=>m.content.slice(0,300)).join('\n\n'),letter:'我是'+p.name+'。今天回来时，愿你能先给自己一点空闲。想继续说，我就在这里；想去过自己的生活，也很好。',read:false};
+ // 同一天更新而非重复积累相同聊天摘录。
+ d.diaries=d.diaries.filter(x=>x.day!==day);d.diaries.push(item);d.diaries=d.diaries.slice(-90);
+ if(!storeCare(d)){addSys('存储空间不足，日记没有保存。');return;}
+ openCare('diary');
+}
+function removeDiary(id){const d=careData();d.diaries=d.diaries.filter(x=>x.id!==id);storeCare(d);openCare('diary');}
+function setMood(m){const d=careData();d.moods[dayKey()]=m;storeCare(d);openCare('mood');}
+function addFact(){const f=el('careFact').value.trim();if(!f)return;const d=careData();if(d.facts.length>=8){addSys('记忆本最多 8 条，先删掉不再需要的事。');return;}if(!d.facts.includes(f))d.facts.push(f);storeCare(d);openCare('memory');}
+function removeFact(i){const d=careData();d.facts.splice(i,1);storeCare(d);openCare('memory');}
+function manualMemory(){return S.user?careData().facts.join('；'):'';}
+function showReturnLetter(){
+ const d=careData(),x=d.diaries.find(x=>!x.read);el('letterBanner').textContent='';
+ if(x){el('letterBanner').textContent=x.name+'留的寄语：'+x.letter;x.read=true;storeCare(d);}
+}
+const CARE_TOOLS={
+ breathe:{title:'慢一点呼吸',text:'把身体放在舒服的位置。用平常的力度吸气，再慢慢呼出去。不必憋气，不必追求固定秒数。跟着自己的节奏做几次。如果头晕或不舒服，就停下，恢复自然呼吸。'},
+ ground:{title:'回到眼前',text:'看一看周围，找三样你看得到的东西。感受脚下或背后有支撑的地方。听一听附近的声音。你不需要立刻解决所有问题，先回到这一刻。'},
+ unwind:{title:'今晚可以先放下',text:'你现在和'+ '白天的忙碌之间，可以留一点空隙。试着放松下巴、肩膀和手指。明天要做的事，可以先写下一件，今晚不必全部处理。'},
+ sleep:{title:'角色晚安引导',text:'让屏幕暗一点，找个舒服的姿势。注意枕头托住头的感觉，让肩膀松下来。睡不着也不必着急，闭着眼休息也是休息。想停下时就停下。'}
+};
+function showCareTool(k){const v=CARE_TOOLS[k];if(!v)return;el('careBody').innerHTML='<h2>'+esc(v.title)+'</h2><p style="line-height:2;margin:16px 0">'+esc(v.text)+'</p><button class="btn" onclick="readCareTool(\''+k+'\')">朗读</button><button class="btn ghost" style="margin-top:10px" onclick="stopSpeak()">停止朗读</button><button class="btn ghost" style="margin-top:10px" onclick="openCare(\'tools\')">其他练习</button>';}
+function readCareTool(k){const was=S.voiceOn;S.voiceOn=true;speak('我是'+(PERSONAS[S.persona]||PERSONAS.tide).name+'。'+CARE_TOOLS[k].text);S.voiceOn=was;}
+
+/* 供测试使用 */
+window.TIDE = {
+  PROVIDERS, PERSONAS, PERSONA_GROUPS, AVATARS, buildSystemPrompt, buildChatBody, parseSseLine,
+  validateBase, isPrivateHost, friendlyError, weakHash, clampRate, clampPitch, isCrisis, crisisReply,
+  cleanReply, isThin, recallMiss, greeting, keySlot, isConfigured, KeyVault,
+  state: () => S, setState: o => Object.assign(S, o), history: () => HISTORY, setHistory: h => { HISTORY = h; }, mem: () => MEM
+};
+
+boot();
+</script>
+</body>
+</html>

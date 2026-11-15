@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  网络安全配置 · 潮汐
+  ============================================================
+  云端模型（DeepSeek / 通义 / Kimi / 智谱 / 豆包 / 硅基流动 / OpenAI）全部走 HTTPS。
+  保留明文 http 只为一个场景：用户自己在局域网跑 Ollama。
+
+  Android 的这份配置没有 IP 段语法（domain 只认主机名，写 10.0.0.0 匹配不到 10.10.1.52），
+  所以"http 只允许私有地址"在代码里做：
+    · 页面 validateEndpoint()
+    · 原生 LlmClient.isAllowedEndpoint() —— 最后一道闸
+  填一个 http:// 的公网地址，请求不会发出去。
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

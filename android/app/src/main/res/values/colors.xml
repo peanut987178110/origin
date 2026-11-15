@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 与页面 CSS 的背景色保持一致，避免启动瞬间闪白。
+         注意：XML 注释内不允许出现连续两个减号，所以这里不写 CSS 变量名。 -->
+    <color name="tide_bg">#0d0b1f</color>
+</resources>
