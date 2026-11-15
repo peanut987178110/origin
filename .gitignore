@@ -35,3 +35,7 @@ desktop.ini
 # 本地临时文件
 *.tmp
 care-test-output.txt
+
+# 传输用打包文件（不入库，见 README「推到 GitHub」）
+*.bundle
+*.zip
