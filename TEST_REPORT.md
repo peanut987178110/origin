@@ -5,6 +5,8 @@
 
 # 测试报告 · v5.1.0（2026-11-10）
 
+> **2026-11-15 清理说明**：本文提到的 `prompts/`、`workflow/`、`evalset/`、`demo/`、`server/`、`analytics/`、`shared/tide_core.js` 是 v5 服务端版的内容，已从仓库移除（保留在学习方法里作对照）。v6 运行中的对应物：提示词 `shared/orbit_mind.js`、人格 `shared/orbit_personas.js`、记忆 `shared/orbit_memory.js`、玩法 `shared/orbit_play.js`；测试见 `docs/31` §10。
+
 > 本报告的每个数字都来自脚本的真实输出，命令见 `docs/28` §C。
 > **测的是什么、没测什么**，两样都写清楚——尤其是：没有真实用户、线上模型没用真实 Key 跑过。
 

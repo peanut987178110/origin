@@ -3,6 +3,8 @@
 
 # 12 · 合规与危机干预 SOP
 
+> **2026-11-15 清理说明**：本文提到的 `prompts/`、`workflow/`、`evalset/`、`demo/`、`server/`、`analytics/`、`shared/tide_core.js` 是 v5 服务端版的内容，已从仓库移除（保留在学习方法里作对照）。v6 运行中的对应物：提示词 `shared/orbit_mind.js`、人格 `shared/orbit_personas.js`、记忆 `shared/orbit_memory.js`、玩法 `shared/orbit_play.js`；测试见 `docs/31` §10。
+
 > 这份文档是产品的**生死线**，不是"补充说明"。
 >
 > 情绪陪伴 + 危机话题 + 未成年人，是监管最敏感的三个交集。

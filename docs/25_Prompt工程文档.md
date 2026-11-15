@@ -1,5 +1,7 @@
 # 25 · Prompt 工程文档（v6.3）
 
+> **2026-11-15 清理说明**：本文提到的 `prompts/`、`workflow/`、`evalset/`、`demo/`、`server/`、`analytics/`、`shared/tide_core.js` 是 v5 服务端版的内容，已从仓库移除（保留在学习方法里作对照）。v6 运行中的对应物：提示词 `shared/orbit_mind.js`、人格 `shared/orbit_personas.js`、记忆 `shared/orbit_memory.js`、玩法 `shared/orbit_play.js`；测试见 `docs/31` §10。
+
 > 适用版本：v6.3.0（2026-11-15）。**运行中的提示词只有一份**：`shared/orbit_mind.js` 的 `buildSystem()` + `turnNote()` + `buildMessages()`。
 > 人格文本在 `shared/orbit_personas.js`；拼装调用在 `src/app/js/05_chat_core.js` 的 `generateReply()`。
 > 本文的所有样例都由代码生成（命令见 §3），不是手写。本文与代码不一致时，以代码为准。

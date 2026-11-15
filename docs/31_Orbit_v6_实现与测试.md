@@ -1,5 +1,7 @@
 # 31 · Orbit v6：按 PRD V2.0 重做的实现与真机测试记录
 
+> **2026-11-15 清理说明**：本文提到的 `prompts/`、`workflow/`、`evalset/`、`demo/`、`server/`、`analytics/`、`shared/tide_core.js` 是 v5 服务端版的内容，已从仓库移除（保留在学习方法里作对照）。v6 运行中的对应物：提示词 `shared/orbit_mind.js`、人格 `shared/orbit_personas.js`、记忆 `shared/orbit_memory.js`、玩法 `shared/orbit_play.js`；测试见 `docs/31` §10。
+
 > 版本：v6.0.0（2026-11-10），v6.3（2026-11-13，见 §8；2026-11-14/15 在模拟器上复测与修复见 §10）。安装包：`dist/Orbit-v6.3.0.apk`（内置模型）。
 > **读这张表之前先看这行**：§5 里的测试数字是 v6.0 的旧驱动跑出来的，已作废（原因见 §9.6）；当前可信的数字在 §10.6。
 > 这一版按用户提供的《Orbit AI 陪伴产品需求规格说明书 V2.0》重做，产品名从「潮汐」改为 **Orbit**。

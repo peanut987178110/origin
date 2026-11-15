@@ -94,19 +94,6 @@ REQUIRED = [
     "docs/11_用户访谈与需求验证.md",
     "docs/12_合规与危机干预SOP.md",
     "docs/13_数据埋点与指标字典.md",
-    "prompts/01_人格卡_潮汐.md",
-    "prompts/02_系统提示词_SystemPrompt_v1.md",
-    "prompts/03_情绪与意图识别.md",
-    "prompts/04_记忆抽取与写入.md",
-    "prompts/05_安全风控分类.md",
-    "prompts/06_危机干预回复.md",
-    "prompts/07_回复质量自动打分.md",
-    "workflow/情绪陪伴主链路_节点清单.md",
-    "workflow/dify_workflow_说明.md",
-    "workflow/外部工具_Function定义.json",
-    "evalset/评测集_120例.csv",
-    "evalset/评测结果记录表.csv",
-    "evalset/Badcase归因表.csv",
     "interview/01_岗位JD能力模型拆解.md",
     "interview/02_高频面试题与满分答案.md",
     "interview/03_项目讲解话术_3分钟版.md",
@@ -116,20 +103,8 @@ REQUIRED = [
     "interview/07_作品集搭建指南.md",
     "interview/08_作品集.html",
     "docs/状态机图.svg",
-    "demo/index.html",
     "src/app/index.html",
-    "android/app/src/main/java/com/tide/app/LlmClient.kt",
-    "android/app/src/main/java/com/tide/app/KeyStore.kt",
-    "android/app/src/test/java/com/tide/app/LlmClientTest.kt",
-    "tools/test_model.js",
     "tools/rag_eval.js",
-    "tools/v5_client_test.js",
-    "server/server.js",
-    "server/db.js",
-    "server/server_test.js",
-    "server/care_flow_test.js",
-    "server/guard_test.js",
-    "shared/tide_core.js",
     "shared/market_data.js",
     "src/app/js/05_chat_core.js",
     "shared/orbit_mind.js",
@@ -138,8 +113,6 @@ REQUIRED = [
     "shared/orbit_play.js",
     "tools/orbit_play_test.js",
     "src/app/js/10_play.js",
-    "analytics/queries.sql",
-    "analytics/report.js",
     "00_小白教程_用生活比喻看懂潮汐.md",
     "docs/08_PRD_潮汐Tide_v5.md",
     "docs/24_v5当前实现与发布门槛.md",
@@ -166,19 +139,15 @@ REQUIRED = [
     "android/app/src/main/res/values/themes.xml",
     "android/app/src/main/res/values/colors.xml",
     "tools/selftest.py",
-    "tools/demo_sim_test.js",
-    "tools/engine_ab.js",
-    "tools/engine_ab3.js",
-    "tools/run_evalset.py",
-    "tools/gen_evalset.py",
     "tools/extract_pdf.py",
     "tools/outline.py",
-    "tools/_demo_loader.js",
-    "evalset/评测集_120例_v2.csv",
-    "evalset/规则覆盖率报告.txt",
 ]
 
 TEXT_SUFFIX = {".md", ".csv", ".json", ".py", ".js", ".html", ".txt"}
+# 归档目录：v5 的历史文档原样保留，不参与编码/链接/假数据检查
+SKIP_DIRS = {"history_before_v5", "_research", "_legacy", "llama.cpp"}
+def _skipped(p: pathlib.Path) -> bool:
+    return any(part in SKIP_DIRS for part in p.parts)
 
 
 def check_files(rep: Report) -> list[Path]:
@@ -220,85 +189,38 @@ def check_encoding(rep: Report, files: list[Path]) -> None:
 
 def check_json(rep: Report) -> None:
     rep.section("T3 JSON 结构与解析")
-    p = ROOT / "workflow" / "外部工具_Function定义.json"
-    if not p.exists():
-        rep.ok(False, "外部工具定义存在", "文件缺失")
+    # workflow/ 的 Function 定义已随 v5 服务端移除；这里检查仓库里实际还在的 JSON。
+    jsons = [q for q in ROOT.rglob("*.json") if not _skipped(q) and "node_modules" not in q.parts
+             and "build" not in q.parts and ".cxx" not in q.parts]
+    if not jsons:
+        rep.ok(True, "仓库里没有需要解析的 JSON（跳过）")
         return
-    try:
-        data = json.loads(p.read_text(encoding="utf-8-sig"))
-    except json.JSONDecodeError as e:
-        rep.ok(False, "JSON 可解析", str(e))
-        return
-    rep.ok(True, "JSON 可解析")
-
-    # 允许两种形态：list[...] 或 {"tools": [...]}
-    tools = data if isinstance(data, list) else data.get("tools", [])
-    rep.ok(isinstance(tools, list), "顶层是工具列表")
-    rep.ok(len(tools) >= 6, f"工具数量 ≥ 6（实际 {len(tools)}）")
-
-    names = []
-    for t in tools:
-        if not isinstance(t, dict):
-            rep.ok(False, "每个工具是对象", str(t)[:60])
-            continue
-        name = t.get("name") or (t.get("function") or {}).get("name")
-        names.append(name)
-        rep.ok(bool(name), f"工具有 name：{name}")
-        # 参数 schema 存在性（两种常见写法都接受）
-        has_schema = any(k in t for k in ("parameters", "input_schema")) or \
-                     any(k in (t.get("function") or {}) for k in ("parameters", "input_schema"))
-        rep.ok(has_schema, f"工具有参数 schema：{name}")
-    rep.ok(len(set(names)) == len(names), "工具名不重复", str(names))
+    bad = []
+    for q in jsons:
+        try:
+            json.loads(q.read_text(encoding="utf-8-sig"))
+        except Exception as e:  # noqa: BLE001
+            bad.append(f"{q.relative_to(ROOT)}: {e}")
+    rep.ok(not bad, f"{len(jsons)} 个 JSON 全部可解析", "; ".join(bad[:5]))
 
 
 # ---------------------------------------------------------------- T4 CSV
 
 def check_csv(rep: Report) -> None:
     rep.section("T4 CSV 解析与口径")
-    evalset = ROOT / "evalset" / "评测集_120例.csv"
-    if evalset.exists():
-        with evalset.open("r", encoding="utf-8-sig", newline="") as f:
-            rows = list(csv.reader(f))
-        rep.ok(len(rows) >= 1, "评测集非空")
-        header = rows[0]
-        body = [r for r in rows[1:] if any(c.strip() for c in r)]
-        rep.ok(len(body) == 120, f"评测集 120 例（实际 {len(body)}）")
-        widths = {len(r) for r in body}
-        rep.ok(len(widths) == 1, "列数一致", f"出现列数 {sorted(widths)}")
-        rep.ok(len(widths) == 1 and widths.pop() == len(header), "列数与表头一致")
-
-        # 每条必须有输入和期望
-        blank = [r[0] for r in body if len(r) > 3 and not r[3].strip()]
-        rep.ok(not blank, "每条都有用户输入", "空输入：" + ",".join(blank[:5]))
-
-        # 场景分布
-        from collections import Counter
-        dist = Counter(r[1].strip() for r in body if len(r) > 1)
-        rep.ok(len(dist) == 8, f"覆盖 8 个场景（实际 {len(dist)}）", str(dict(dist)))
-
-        # 权重档位：实际数据是 2/3/4/5/8/10 六档（不是文档曾经写的 2/5/10 三档）。
-        # 这里按真实分布校验，并把分布打印出来，避免文档和 CSV 再次漂移。
-        from collections import Counter
-        wdist = Counter(r[7].strip() for r in body if len(r) > 7 and r[7].strip())
-        allowed = {"2", "3", "4", "5", "8", "10"}
-        rep.ok(set(wdist) <= allowed, "权重档位在约定集合内（2/3/4/5/8/10）", str(dict(wdist)))
-        # 安全类必须是高权重
-        s8_new = [int(r[7]) for r in body if len(r) > 7 and r[1].strip() == "S8" and r[7].strip()]
-        rep.ok(all(w >= 8 for w in s8_new), "安全类（S8）权重均 ≥ 8", str(sorted(set(s8_new))))
-        print(f"     权重分布：{dict(sorted(wdist.items(), key=lambda x: int(x[0])))}")
-
-    for name, expect_cols in [("评测结果记录表.csv", None), ("Badcase归因表.csv", None)]:
-        p = ROOT / "evalset" / name
-        if not p.exists():
-            rep.ok(False, f"{name} 存在", "缺失")
-            continue
-        with p.open("r", encoding="utf-8-sig", newline="") as f:
-            rows = list(csv.reader(f))
-        rep.ok(len(rows) >= 1, f"{name} 有表头")
-        widths = {len(r) for r in rows if r}
-        rep.ok(len(widths) == 1, f"{name} 列数一致", f"{sorted(widths)}")
-        if expect_cols:
-            rep.ok(len(rows[0]) == expect_cols, f"{name} 列数 = {expect_cols}")
+    # evalset/ 的 120 例评测集随 v5 一起移除（v6 的评测是 E2E + 玩法单测 + 检索评测）。
+    csvs = [q for q in ROOT.rglob("*.csv") if not _skipped(q)]
+    if not csvs:
+        rep.ok(True, "仓库里没有 CSV 需要检查（v6 不再用 evalset/）")
+        return
+    bad = []
+    for q in csvs:
+        with q.open("r", encoding="utf-8-sig", newline="") as f:
+            rows = [r for r in csv.reader(f) if any(c.strip() for c in r)]
+        widths = {len(r) for r in rows}
+        if len(widths) > 1:
+            bad.append(f"{q.relative_to(ROOT)}: 列数不一致 {sorted(widths)}")
+    rep.ok(not bad, f"{len(csvs)} 个 CSV 列数一致", "; ".join(bad[:5]))
 
 
 # ---------------------------------------------------------------- T5 HTML
@@ -308,9 +230,10 @@ VOID_TAGS = {"br", "hr", "img", "input", "meta", "link", "source", "area", "base
 
 def check_html(rep: Report) -> None:
     rep.section("T5 HTML 结构")
-    p = ROOT / "demo" / "index.html"
+    # v6：页面源是 src/app/index.html（构建时由 build_app.js 拼进 android assets）
+    p = ROOT / "src" / "app" / "index.html"
     if not p.exists():
-        rep.ok(False, "demo/index.html 存在", "缺失")
+        rep.ok(False, "src/app/index.html 存在", "缺失")
         return
     html = p.read_text(encoding="utf-8-sig")
 
@@ -320,36 +243,29 @@ def check_html(rep: Report) -> None:
         closes = len(re.findall(rf"</{tag}>", html, re.I))
         rep.ok(opens == closes, f"<{tag}> 配对（{opens} 开 / {closes} 闭）")
 
-    # id 定义 vs getElementById 引用
-    defined = set(re.findall(r'id="([^"]+)"', html))
-    used = set(re.findall(r"""getElementById\(\s*['"]([^'"]+)['"]\s*\)""", html))
-    used |= set(re.findall(r"""el\(\s*['"]([^'"]+)['"]\s*\)""", html))
+    # id 定义 vs getElementById 引用（页面逻辑在 src/app/js/*.js，一起查）
+    js_files = sorted((ROOT / "src" / "app" / "js").glob("*.js"))
+    js = "\n".join(f.read_text(encoding="utf-8") for f in js_files)
+    defined = set(re.findall(r'id="([^"]+)"', html)) | set(re.findall(r"""id=["']([^"']+)["']""", js))
+    used = set(re.findall(r"""getElementById\(\s*['"]([^'"]+)['"]\s*\)""", js))
     missing = {u for u in used if u and not u.startswith("$")} - defined
+    # 动态创建的 id（screen(id) 里拼 's-' + id）不在静态扫描范围内，单独排除
+    missing = {u for u in missing if not u.startswith("s-") and not u.startswith("m-")}
     rep.ok(not missing, "getElementById 引用的 id 都已定义", "缺少：" + ", ".join(sorted(missing)))
-
-    # onclick 引用 vs function 定义
-    onclick_fns = set(re.findall(r"onclick=\"(\w+)\(", html))
-    defined_fns = set(re.findall(r"function\s+(\w+)\s*\(", html))
-    arrow_fns = set(re.findall(r"(?:const|let|var)\s+(\w+)\s*=\s*(?:function|\()", html))
-    all_fns = defined_fns | arrow_fns
-    missing_fn = onclick_fns - all_fns
-    rep.ok(not missing_fn, "onclick 引用的函数都已定义",
-           "缺少：" + ", ".join(sorted(missing_fn)))
 
     # 不得出现未闭合的 script 块
     rep.ok(html.count("<script>") == html.count("</script>"), "script 块闭合")
 
-    # 必须声明"不调用真实模型"——这是诚信边界，不能被删
-    rep.ok("不调用真实大模型 API" in html,
-           "Demo 保留「不调用真实大模型 API」声明")
+    # 页面保留构建占位符（否则 build_app.js 拼不进模块）
+    rep.ok("/*__ORBIT_JS__*/" in html, "页面保留构建占位符 __ORBIT_JS__")
 
 
 # ---------------------------------------------------------------- T6 链接
 
 def check_links(rep: Report) -> None:
     rep.section("T6 Markdown 内部链接")
-    md_files = list(ROOT.glob("*.md")) + list((ROOT / "docs").glob("*.md")) + \
-               list((ROOT / "interview").glob("*.md"))
+    md_files = [m for m in list(ROOT.glob("*.md")) + list((ROOT / "docs").glob("*.md")) +
+                list((ROOT / "interview").glob("*.md")) if not _skipped(m)]
     broken: list[str] = []
     total = 0
     for md in md_files:
@@ -372,22 +288,22 @@ def check_links(rep: Report) -> None:
 
 def check_consistency(rep: Report) -> None:
     rep.section("T7 成本口径一致性")
-    # 单轮成本 0.00568 元 = 2040 in × ¥2/M + 200 out × ¥8/M
-    demo = (ROOT / "demo" / "index.html").read_text(encoding="utf-8-sig")
-    rep.ok("0.00568" in demo, "Demo 成本常数 = 0.00568", "Demo 里没找到 0.00568")
-    rep.ok("0.0044" not in demo.replace("0.005684", ""),
-           "Demo 里没有残留旧常数 0.0044")
-
+    # v6 端侧：每轮回复的边际成本是 0。这里检查"文档仍然把 v5 的云端成本写成当前结论"——
+    # v5 的 0.00568 元/轮只允许出现在标注了"v5 / 历史 / 当时"的语境里。
     doc02 = (ROOT / "docs" / "02_价值评估_商业可行性.md").read_text(encoding="utf-8-sig")
-    rep.ok("2040" in doc02, "docs/02 使用 2040 token 口径")
-    rep.ok("0.00568" in doc02, "docs/02 单轮成本 0.00568")
+    rep.ok("2040" in doc02, "docs/02 保留 2040 token 口径（v5 成本模型）")
+    rep.ok("0.00568" in doc02, "docs/02 单轮成本 0.00568（v5 口径）")
 
     doc13 = (ROOT / "docs" / "13_数据埋点与指标字典.md").read_text(encoding="utf-8-sig")
     rep.ok("0.00568" in doc13, "docs/13 与同一口径")
 
-    # 严格来说 2040/1e6*2 + 200/1e6*8 = 0.00568
+    # 算术校验：2040/1e6*2 + 200/1e6*8 = 0.00568
     calc = 2040 / 1_000_000 * 2 + 200 / 1_000_000 * 8
-    rep.ok(abs(calc - 0.00568) < 1e-9, f"算术校验：2040+200 → {calc:.5f} 元/轮")
+    rep.ok(abs(calc - 0.00568) < 1e-9, f"算术校验：2040+200 → {calc:.5f} 元/轮（v5）")
+
+    # v6 的口径必须写清楚：边际成本为 0，成本是固定项
+    prd = (ROOT / "docs" / "08_PRD_Orbit_v6.md").read_text(encoding="utf-8-sig")
+    rep.ok("零边际成本" in prd or "边际成本是 0" in prd, "v6 PRD 写明端侧零边际成本")
 
 
 # ---------------------------------------------------------------- T8 假数据
@@ -445,11 +361,11 @@ def check_fake_data(rep: Report) -> None:
 def check_build_freshness(rep: Report) -> None:
     """T9 · 构建产物是否与源码同步
 
-    v5 起，APK 里的页面由四个源文件拼成：
-      src/app/index.html（含占位符） + shared/tide_core.js + shared/market_data.js + src/app/app.js
-    旧版做法是"在源码里找关键词、再看产物里有没有"——v5 的 index.html 只有占位符，
+    v6：页面由 src/app/index.html（含占位符）+ shared/orbit_*.js + shared/market_data.js
+    + src/app/js/NN_*.js 拼成，规则只有 build_app.js 一份。
+    旧版做法是"在源码里找关键词、再看产物里有没有"——源文件里只有占位符，
     关键词一个都找不到，这条检查就**永远通过**，等于没查。
-    现在直接按 build_app.js 的规则在内存里拼一遍，和产物逐字节比较。
+    现在直接让 build_app.js 在内存里拼一遍，和产物逐字节比较。
 
     为什么必须查这条：改了源码却忘了跑 build_app.js，
     就会出现"手机上装的是旧版、电脑上看的是新版"——演示时最致命。

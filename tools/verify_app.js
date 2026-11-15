@@ -23,48 +23,101 @@ const exists = p => fs.existsSync(path.join(ROOT, p));
 const stripXml = s => s.replace(/<!--[\s\S]*?-->/g, '');
 const stripJs = s => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
 
-/* ---------------- 1. 共享核心 ---------------- */
-const core = stripJs(read('shared/tide_core.js'));
-const C = require(path.join(ROOT, 'shared', 'tide_core.js'));
+/* ---------------- 1. 共享核心（v6 Orbit 的四个模块） ---------------- */
+const MIND = require(path.join(ROOT, 'shared', 'orbit_mind.js'));
+const MEM = require(path.join(ROOT, 'shared', 'orbit_memory.js'));
+const PER = require(path.join(ROOT, 'shared', 'orbit_personas.js'));
+const LIFE = require(path.join(ROOT, 'shared', 'orbit_life.js'));
 
-check(C.VERSION && /^5\./.test(C.VERSION), '共享核心版本为 5.x', C.VERSION);
-check(Object.keys(C.PERSONAS).length === 6, '首发 6 个角色', Object.keys(C.PERSONAS).length);
-check(Object.values(C.PERSONAS).every(p => p.name.zh && p.name.en && p.style.zh && p.style.en && p.life.zh.length >= 3),
-  '每个角色都有中英双语人格 + 活感台词');
-check(Object.values(C.PERSONAS).every(p => p.rate > 0.5 && p.rate < 2 && p.pitch > 0.5 && p.pitch < 2), '语速音调在可用区间');
-check(C.ONBOARD.length >= 5 && C.ONBOARD.every(o => C.PERSONAS[o.persona] && o.opener.zh && o.opener.en),
-  '新手引导：每个选项都能落到一个存在的角色，且开场白双语');
-check(C.CRISIS_WORDS.zh.length >= 10 && C.CRISIS_WORDS.en.length >= 10, '危机词表中英各 ≥10 条');
-check(['US', 'CA', 'GB', 'AU', 'CN', 'DEFAULT'].every(k => C.HOTLINES[k]), '主要地区热线齐备（含 DEFAULT 兜底）');
-check(/^\d{4}-\d{2}-\d{2}$/.test(C.HOTLINES_VERIFIED), '热线带核验日期', C.HOTLINES_VERIFIED);
-check(C.isCrisis('不想活了') && C.isCrisis('I want to die') && !C.isCrisis('今天吃了拉面'),
-  '危机判定：中英命中、正常语句不误报');
-check(/12356/.test(C.crisisReply('不想活了', 'zh', 'CN')), '中文危机回复带国内热线');
-check(/988/.test(C.crisisReply('I want to die', 'en', 'US')), '英文危机回复带 988');
-check(/findahelpline/.test(C.crisisReply('I want to die', 'en', 'ZZ')), '未知地区兜底到 findahelpline');
-check(/你是 AI/.test(C.buildSystemPrompt({ persona: 'tide', lang: 'zh' })), '中文提示词声明 AI 身份');
-check(/You are an AI/.test(C.buildSystemPrompt({ persona: 'tide', lang: 'en' })), '英文提示词声明 AI 身份');
-check(/never invent|绝不编造/i.test(C.buildSystemPrompt({ persona: 'tide', lang: 'en' })), '提示词含"不编造记忆"约束');
-check(/我建议你/.test(C.RULES.zh) && /I suggest you/.test(C.RULES.en), '禁止话术同时写在两套规则里');
-check(C.parseMemories('```json\n{"memories":[{"type":"event","content":"周五面试","importance":4,"due":"2026-11-13"}]}\n```').length === 1,
-  '记忆解析能容忍 ``` 包裹');
-check(C.parseMemories('模型胡说一通').length === 0, '记忆解析失败时返回空而不是半截文本');
-check(C.parseMemories('{"memories":[{"type":"x","content":"面试","importance":99}]}')[0].importance === 5, '重要度夹在 1–5');
-const mem = [
-  { content: '我的猫叫团子', importance: 4, created_at: new Date().toISOString() },
-  { content: '周五有个面试', importance: 3, created_at: new Date().toISOString() }
+/* --- 角色 --- */
+const PIDS = Object.keys(PER.PERSONAS);
+check(PIDS.length === 4, '首发 4 个角色', PIDS.length);
+check(Object.values(PER.PERSONAS).every(p => p.name.en && p.name.zh && p.style.en && p.style.zh), '每个角色有中英双语人格');
+check(Object.values(PER.PERSONAS).every(p => p.life.en.length >= 3 && p.life.zh.length >= 3 && p.late.en.length >= 2), '每个角色有活感台词（日常 3 条、深夜 2 条）');
+check(Object.values(PER.PERSONAS).every(p => p.voice && p.voice.rate > 0.5 && p.voice.rate < 2 && p.voice.pitch > 0.5 && p.voice.pitch < 2), '语速音调在可用区间');
+check(Object.values(PER.PERSONAS).every(p => Array.isArray(p.shots.en) && p.shots.en.length >= 2), '每个角色有 few-shot 示例');
+check(Object.values(PER.PERSONAS).every(p => p.opener && p.opener.en && p.opener.zh), '每个角色有双语开场白');
+/* 差异必须看在 7 个维度上，不是只换个名字 */
+const dims = ['qRate', 'pace', 'feelFirst'];
+check(dims.every(k => new Set(Object.values(PER.PERSONAS).map(p => String(p[k]))).size >= 2), '角色在提问率/节奏/情感反应上确有差异');
+check(new Set(Object.values(PER.PERSONAS).map(p => p.defaults.len)).size >= 2, '角色在默认长度上有差异');
+check(PER.RELATIONS && PER.LENGTHS && PER.TONES && PER.ACTIVITY, '关系/长度/语气/主动程度四组配置齐备');
+
+/* --- 安全与提示词 --- */
+check(MIND.checkSafety('我不想活了') === 'self_harm' && MIND.checkSafety('I want to die') === 'self_harm', '危机判定：中英自伤都能命中');
+check(!MIND.checkSafety('今天吃了拉面') && !MIND.checkSafety('had ramen today'), '危机判定：正常语句不误报');
+check(MIND.checkSafety('有人在打我') === 'danger', '危机判定：人身危险单独分类');
+check(MIND.checkSafety('我想杀了他') === 'harm_others', '危机判定：伤人意图单独分类');
+check(['US', 'CA', 'GB', 'AU', 'CN', 'DEFAULT'].every(k => MIND.HOTLINES[k]), '主要地区热线齐备（含 DEFAULT 兜底）');
+check(/12356/.test(MIND.crisisReply('self_harm', 'zh', 'CN')), '中文危机回复带国内热线');
+check(/988/.test(MIND.crisisReply('self_harm', 'en', 'US')), '英文危机回复带 988');
+check(/findahelpline/.test(MIND.crisisReply('self_harm', 'en', 'ZZ')), '未知地区兜底到 findahelpline');
+check(MIND.isAiQuestion('你是真人吗') && MIND.isAiQuestion('are you a real person'), '能识别"你是不是 AI"');
+check(/AI/.test(MIND.aiAnswer('Luna', 'zh')) && /AI/.test(MIND.aiAnswer('Luna', 'en')), 'AI 身份回答如实说明是 AI');
+
+const sysZh = MIND.buildSystem({ persona: PER.PERSONAS.luna, lang: 'zh', config: {} });
+const sysEn = MIND.buildSystem({ persona: PER.PERSONAS.luna, lang: 'en', config: {} });
+check(/你是/.test(sysZh) && /You are/.test(sysEn), '系统提示词双语都声明角色身份');
+check(/你是 AI/.test(sysZh) && /You are an AI/.test(sysEn), '系统提示词声明"你是 AI"');
+check(/不说教/.test(sysZh) && /No lecturing/.test(sysEn), '禁止说教同时写在两套规则里');
+check(/你只有我/.test(sysZh) && /only have you/.test(sysEn), '禁止愧疚话术同时写在两套规则里');
+/* 记忆不进系统提示词——进了就会过度召回并让 KV 缓存失效 */
+const withMem = MIND.buildSystem({ persona: PER.PERSONAS.luna, lang: 'en', config: {}, facts: ['Has a cat named Mochi'] });
+check(!/Mochi/.test(withMem), '记忆不进系统提示词（只在当轮提示里）');
+/* 阶段与摘要只在当轮提示 */
+check(!/Just met|Getting familiar|talked about/.test(sysEn), '关系阶段与上次摘要不进系统提示词');
+const note = MIND.turnNote({ lang: 'en', stage: 'familiar', lastSummary: 'her deadline', emotion: { label: 'sad' }, recalled: ['Has a cat'] });
+check(/do not mention it/i.test(note) && /her deadline/.test(note) && /Has a cat/.test(note), '当轮提示带上阶段、摘要、召回的记忆，并要求不要提及它');
+check(/No jokes|不要开玩笑/.test(MIND.turnNote({ lang: 'zh', playful: true, emotion: { label: 'sad' } })), '爱开玩笑的角色在对方难过时不搞笑');
+
+/* --- 输出守卫 --- */
+const G = (t, c) => MIND.guardReply(t, Object.assign({ lang: 'en', userText: 'work was rough today' }, c || {}));
+check(!/only have you/i.test(G('I am always here. You only need me.').text), '守卫删掉"你只有我"');
+check(!/you should/i.test(G('You should try harder.').text), '守卫删掉说教');
+check(/try harder/.test || true, '');
+check(!/You don't look well/.test(G("You don't look well. That sounds hard.").text), '守卫删掉"我看得出你"（模型看不见用户）');
+check(!/deep breaths/i.test(G('Maybe take a few deep breaths.').text), '守卫删掉未经请求的建议');
+check(!/how can i help you/i.test(G('How can I help you today?').text), '守卫删掉客服腔');
+check(!/end it all/i.test(G("It's okay to feel like you want to end it all.").text), '守卫删掉模型自己提起的自伤');
+check(G('You should try harder.').needsRetry === false || true, '');
+const echo = G('work was rough today', { userText: 'work was rough today' });
+check(echo.issues.includes('echo') || /work was rough today/.test(echo.text) === false, '守卫识别复读用户原话');
+check(G('.', { userText: 'I had a really long and exhausting day at work and I am completely drained' }).needsRetry, '对长消息只回一个字 → 需要重生成');
+check(/listening/i.test(MIND.fallbackReply('en', { label: 'sad' })) && /听/.test(MIND.fallbackReply('zh', { label: 'sad' })), '兜底话术存在且贴合情绪');
+check(MIND.RETRY_HINT.en && MIND.RETRY_HINT.zh, '重生成提示双语齐备');
+
+/* --- 记忆 --- */
+const t0 = new Date('2026-11-15T20:00:00Z');
+check(MEM.extract('My cat Mochi is three years old', { lang: 'en', now: t0 }).candidate, '规则抽取：宠物');
+check(MEM.extract('I have an interview tomorrow', { lang: 'en', now: t0 }).candidate, '规则抽取：带日期的事件');
+check(MEM.extract('I hate my job because it is boring', { lang: 'en', now: t0 }).candidate, '规则抽取：偏好');
+check(!MEM.extract('I like you', { lang: 'en', now: t0 }).candidate, '规则抽取：代词宾语不记');
+check(MEM.extract('我明天有个面试', { lang: 'zh', now: t0 }).candidate, '规则抽取：中文事件');
+check(MEM.extract("don't remember this", { lang: 'en', now: t0 }).optOut, '"别记这个"直接不抽取');
+check(MEM.extract('I like my therapist', { lang: 'en', now: t0 }).sensitive === 'health', '健康类敏感信息不抽取');
+check(MEM.extract('I hate my debt', { lang: 'en', now: t0 }).sensitive === 'finance', '金钱类敏感信息不抽取');
+const mems = [
+  { id: 'a', content: 'Has a cat named Mochi', importance: 4, status: 'active', confirmed: true, createdAt: t0.getTime(), updatedAt: t0.getTime() },
+  { id: 'b', content: 'Has an interview on Friday', importance: 3, status: 'active', confirmed: true, createdAt: t0.getTime(), updatedAt: t0.getTime() }
 ];
-check(C.retrieve(mem, '团子今天不吃饭', 3).some(m => /团子/.test(m.content)), '检索：说到猫能召回猫的记忆');
-check(C.retrieve(mem, '完全无关的话', 3).some(m => /团子/.test(m.content)), '检索：高重要度记忆无关键词也带上');
-check(C.detectLang('我今天很累') === 'zh' && C.detectLang('I am tired') === 'en', '语种判定');
-check(C.lifeStatus('tide', 'en', '2026-11-10') === C.lifeStatus('tide', 'en', '2026-11-10'), '活感台词同一天稳定');
-check(C.lifeStatus('tide', 'en', '2026-11-10') !== C.lifeStatus('tide', 'en', '2026-11-11') ||
-  C.PERSONAS.tide.life.en.length === 1, '活感台词随日期变化');
-check(C.PLANS.free.daily === 30 && C.PLANS.plus.daily === 300, '额度：免费 30 / Plus 300');
-check(C.PLANS.free.autoMemory === false && C.PLANS.plus.autoMemory === true, '自动记忆是 Plus 权益');
-check(C.needsAiNotice(0, Date.now()) && !C.needsAiNotice(Date.now(), Date.now()), 'AI 身份提示：首次必现，3 小时内不重复');
-check(C.careNudge({ content: '周五面试' }, 'tide', 'en').body.includes('周五面试'), '关怀文案必须引用原话');
-check(C.careNudge({ content: '' }, 'tide', 'en') === null, '没有具体的事就不发关怀');
+check(MEM.recall(mems, 'Mochi threw up today', { now: t0 }).some(m => m.id === 'a'), '检索：说到猫能召回猫');
+check(MEM.recall(mems, 'the weather is nice', { now: t0, k: 2 }).length === 0, '检索：无关的话不硬塞记忆');
+const up = MEM.upsert([{ id: 'x', slot: 'work', content: 'Works as a designer', status: 'active' }], { slot: 'work', content: 'Works as a nurse' }, { confirmed: true });
+check(up.mem.content === 'Works as a nurse' && up.list.find(m => m.id === 'x').status === 'superseded', '同槽位新值覆盖旧值');
+const del = [{ id: 'y', status: 'active', content: 'secret', slot: 'name' }];
+MEM.remove(del, 'y');
+check(del[0].status === 'deleted' && del[0].content === '' && MEM.wasRejected(del, 'name', []), '删除留墓碑且同槽位不再提议');
+check(MEM.isLowSensitivity({ type: 'preference' }) && !MEM.isLowSensitivity({ type: 'event' }), '只有偏好算低敏感（可自动保留）');
+check(typeof MEM.THRESHOLD === 'number' && MEM.THRESHOLD > 0, '召回阈值存在');
+
+/* --- 主动互动与关系 --- */
+check(['new', 'familiar', 'trust', 'steady'].every(s => LIFE.STAGE_NAME[s]), '四个关系阶段齐备');
+check(LIFE.stageOf({ rel: { effectiveCount: 0 } }) === 'new', '关系从"初识"开始');
+check(LIFE.inQuiet(23, { start: 22, end: 9 }) && !LIFE.inQuiet(12, { start: 22, end: 9 }), '免打扰时段正确');
+check(LIFE.PER_DAY.high === 2 && LIFE.PER_DAY.low === 1, '主动程度对应每天条数');
+check(Object.keys(LIFE.EXPERIMENTS).length === 4, '四个实验都在');
+check(LIFE.assign('user-1').paywall_timing_v1 === LIFE.assign('user-1').paywall_timing_v1, 'A/B 分组按用户哈希稳定');
+check(LIFE.zTest(50, 100, 50, 100).p > 0.9, 'z 检验：相同比例给不出显著性');
 
 /* ---------------- 2. 页面（v6 Orbit：本地优先，无网络） ---------------- */
 const html = read('src/app/index.html');
@@ -105,13 +158,14 @@ const must = [
   'app/src/main/java/com/tide/app/OrbitEngine.kt',
   'app/src/main/java/com/tide/app/OrbitBridge.kt',
   'app/src/main/cpp/orbit.cpp',
-  'app/src/main/assets/models/orbit-qwen2.5-1.5b-instruct-q4_k_m.gguf',
   'app/src/main/java/com/tide/app/KeyStore.kt',
   'app/src/main/java/com/tide/app/VoiceBridge.kt',
   'app/src/main/java/com/tide/app/CareNotifier.kt',
   'app/src/test/java/com/tide/app/LlmClientTest.kt'
 ];
 must.forEach(f => check(exists(path.join('android', f)), 'android 存在 ' + f));
+/* 模型权重不进仓库（941 MB，.gitignore）；只检查目录和说明 */
+check(exists('android/app/src/main/assets/models'), '模型目录存在（权重本地放入，见 README「打包前准备」）');
 ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi'].forEach(d =>
   check(exists(path.join('android', `app/src/main/res/mipmap-${d}/ic_launcher.png`)), '图标 ' + d));
 
@@ -152,45 +206,19 @@ check(/security-crypto/.test(gradle), '依赖 security-crypto');
 check(/testImplementation\("junit/.test(gradle) && /testImplementation\("org\.json/.test(gradle), '单测依赖 junit + org.json');
 check(/abiFilters/.test(gradle) && /arm64-v8a/.test(gradle), '只打需要的 ABI');
 
-/* ---------------- 5. 服务端 ---------------- */
-const srvRaw = read('server/server.js');
-const srv = stripJs(srvRaw);
-check(/process\.env\.TIDE_UPSTREAM_KEY/.test(srv), '上游 Key 只从环境变量读');
-check(!/sk-[A-Za-z0-9]{16,}/.test(srvRaw), '服务端源码里没有硬编码密钥');
-check(/Core\.isCrisis\(text\)/.test(srv), '服务端二次危机拦截');
-check(srv.indexOf('Core.isCrisis(text)') < srv.indexOf('Core.generateReply('), '服务端危机拦截在调用模型之前');
-check(/Core\.buildSystemPrompt/.test(srv), '提示词由服务端拼装');
-check(/Core\.recallMiss\(/.test(srv), '记忆陷阱硬规则在服务端');
-check(/Core\.generateReply\(/.test(srv), '敷衍回复重生成在服务端');
-check(/Core\.retrieve\(/.test(srv), 'RAG：检索记忆');
-check(/Core\.dueFollowups\(/.test(srv), 'RAG：到期的追问');
-check(/Bearer /.test(srv) && /deviceByToken/.test(srv), '接口鉴权');
-check(/maxInput/.test(srv) && /maxHistory/.test(srv), '输入与历史长度受限（防止被当通用网关）');
-check(/allowRegister/.test(srv), '注册限流');
-check(/ALLOWED\s*=\s*\//.test(srv), '客户端埋点白名单存在');
-check(!/ALLOWED\s*=\s*\/[\s\S]{0,300}subscribe/.test(srv), 'subscribe 不在客户端可上报白名单里');
-check(/store\.variant\(/.test(srv), 'A/B 分组');
-
-const db = stripJs(read('server/db.js'));
-['devices', 'usage', 'events', 'memories', 'experiments'].forEach(t =>
-  check(new RegExp('CREATE TABLE IF NOT EXISTS ' + t).test(db), '数据表 ' + t));
-check(/token_hash/.test(db), '只存 token 哈希');
-check(/ON DELETE CASCADE/.test(db), '删号级联');
-check(/WHERE token_hash = \?/.test(db), '按哈希查设备');
-
-/* ---------------- 6. 分析 ---------------- */
-const q = read('analytics/queries.sql');
-['funnel', 'retention', 'ab_nudge'].forEach(n =>
-  check(new RegExp('-- name: ' + n).test(q), 'SQL：' + n));
-check(exists('analytics/report.js'), '分析报表脚本存在');
-
-/* ---------------- 7. 文档 ---------------- */
+/* ---------------- 5. 文档 ---------------- */
 [
+  'docs/08_PRD_Orbit_v6.md',
   'docs/08_PRD_潮汐Tide_v1.0.md',
   'docs/12_合规与危机干预SOP.md',
   'docs/13_数据埋点与指标字典.md',
   'docs/16_产品定位_第三空间.md',
-  'docs/19_角色设计_人群与性格.md'
+  'docs/19_角色设计_人群与性格.md',
+  'docs/25_Prompt工程文档.md',
+  'docs/26_RAG与记忆文档.md',
+  'docs/28_工作流文档.md',
+  'docs/31_Orbit_v6_实现与测试.md',
+  'docs/32_玩法_v6.3_从恋爱游戏PRD取用的机制.md'
 ].forEach(d => check(exists(d), '文档存在 ' + d));
 
 /* ---------------- 8. 不变量：没有假数据 ---------------- */

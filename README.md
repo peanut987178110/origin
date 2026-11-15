@@ -3,6 +3,8 @@
 
 # Orbit（原潮汐 Tide）· AI 陪伴产品经理实战项目
 
+> **2026-11-15 清理说明**：本文提到的 `prompts/`、`workflow/`、`evalset/`、`demo/`、`server/`、`analytics/`、`shared/tide_core.js` 是 v5 服务端版的内容，已从仓库移除（保留在学习方法里作对照）。v6 运行中的对应物：提示词 `shared/orbit_mind.js`、人格 `shared/orbit_personas.js`、记忆 `shared/orbit_memory.js`、玩法 `shared/orbit_play.js`；测试见 `docs/31` §10。
+
 一个**海外 AI 陪伴 App 的完整原型**，用来学习并通过「AI 陪伴产品经理（海外）」岗位的面试。
 包含：安卓 App、自建服务端、数据分析 SQL、自动化测试，以及 PRD / Prompt / RAG / Skills / 工作流 / 市场数据 / 教程等全套文档。
 

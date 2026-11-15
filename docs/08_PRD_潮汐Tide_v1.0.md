@@ -3,6 +3,8 @@
 
 # 潮汐 Tide PRD v4.0.0：手机内置模型版
 
+> **2026-11-15 清理说明**：本文提到的 `prompts/`、`workflow/`、`evalset/`、`demo/`、`server/`、`analytics/`、`shared/tide_core.js` 是 v5 服务端版的内容，已从仓库移除（保留在学习方法里作对照）。v6 运行中的对应物：提示词 `shared/orbit_mind.js`、人格 `shared/orbit_personas.js`、记忆 `shared/orbit_memory.js`、玩法 `shared/orbit_play.js`；测试见 `docs/31` §10。
+
 文档日期：2026-11-02。状态：已构建，可进入设备验收，未公开发布。
 
 > 当前交付口径（v4.0.0，2026-11-02）：默认使用安装包内置 Qwen2.5-0.5B-Instruct Q4_K_M，通过 llama.cpp 在手机 CPU 推理，无需 API Key、电脑或首次联网下载。云 API 为设置中的可选模式。安装包约 485 MB，仅支持 arm64-v8a / x86_64，Android 7.0 及以上。首次对话需在应用私有目录准备模型，建议至少预留 1.5 GB 空间。
