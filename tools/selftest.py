@@ -78,7 +78,6 @@ class Report:
 
 REQUIRED = [
     "README.md",
-    "00_学习路线图_14周.md",
     "00_体检报告_项目问题清单.md",
     "docs/00_大模型能力边界清单.md",
     "docs/01_需求挖掘_广义痛点与PMF.md",
@@ -94,14 +93,6 @@ REQUIRED = [
     "docs/11_用户访谈与需求验证.md",
     "docs/12_合规与危机干预SOP.md",
     "docs/13_数据埋点与指标字典.md",
-    "interview/01_岗位JD能力模型拆解.md",
-    "interview/02_高频面试题与满分答案.md",
-    "interview/03_项目讲解话术_3分钟版.md",
-    "interview/04_简历改写建议.md",
-    "interview/05_Demo演示脚本.md",
-    "interview/06_数据真实性补救_真实评测手册.md",
-    "interview/07_作品集搭建指南.md",
-    "interview/08_作品集.html",
     "docs/状态机图.svg",
     "src/app/index.html",
     "tools/rag_eval.js",
@@ -113,7 +104,6 @@ REQUIRED = [
     "shared/orbit_play.js",
     "tools/orbit_play_test.js",
     "src/app/js/10_play.js",
-    "00_小白教程_用生活比喻看懂潮汐.md",
     "docs/08_PRD_潮汐Tide_v5.md",
     "docs/24_v5当前实现与发布门槛.md",
     "docs/25_Prompt工程文档.md",
@@ -143,6 +133,7 @@ REQUIRED = [
     "tools/outline.py",
 ]
 
+# 学习文档与面试材料只在本地保留、不上传 GitHub（见 .gitignore），因此不算必备文件。
 TEXT_SUFFIX = {".md", ".csv", ".json", ".py", ".js", ".html", ".txt"}
 # 归档目录：v5 的历史文档原样保留，不参与编码/链接/假数据检查
 SKIP_DIRS = {"history_before_v5", "_research", "_legacy", "llama.cpp"}

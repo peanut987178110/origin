@@ -39,3 +39,10 @@ care-test-output.txt
 # 传输用打包文件（不入库，见 README「推到 GitHub」）
 *.bundle
 *.zip
+
+# 仅本地保留，不上传到 GitHub（求职与学习材料）
+00_学习路线图_14周.md
+00_小白教程_用生活比喻看懂潮汐.md
+15_学习步骤与方法.md
+interview/
+docs/history_before_v5/
