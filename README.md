@@ -1,9 +1,9 @@
 <!-- tide-v6-banner -->
-> 当前版本 v6.3.0「Orbit」（2026-11-15）：按《Orbit PRD V2.0》重做，**下载即用**——不用登录、不用 API Key、不联网，模型（Qwen2.5-1.5B Q4_K_M）在手机上运行。安装包 `dist/Orbit-v6.3.0.apk`。产品定义见 `docs/08_PRD_Orbit_v6.md`；实现、测试与已知问题见 `docs/31_Orbit_v6_实现与测试.md`（§10 是最新一轮）；抓娃娃、一起专注等玩法取用的机制见 `docs/32_玩法_v6.3_从恋爱游戏PRD取用的机制.md`。**没有真实用户数据，没有真实支付；真机未测。** 下面的内容描述的是 v5「潮汐」，保留作对照。
+> 当前版本 v6.3.0「Orbit」（2026-11-15）：按《Orbit PRD V2.0》重做，**下载即用**——不用登录、不用 API Key、不联网，模型（Qwen2.5-1.5B Q4_K_M）在手机上运行。安装包与模型文件不入库（体量超 GitHub 单文件上限），打包方法见 `docs/17`。产品定义见 `docs/08_PRD_Orbit_v6.md`；实现、测试与已知问题见 `docs/31_Orbit_v6_实现与测试.md`（§10 是最新一轮）；抓娃娃、一起专注等玩法取用的机制见 `docs/32_玩法_v6.3_从恋爱游戏PRD取用的机制.md`。**没有真实用户数据，没有真实支付；真机未测，测的是模拟器。**
 
 # Orbit（原潮汐 Tide）· AI 陪伴产品经理实战项目
 
-> **2026-11-15 清理说明**：本文提到的 `prompts/`、`workflow/`、`evalset/`、`demo/`、`server/`、`analytics/`、`shared/tide_core.js` 是 v5 服务端版的内容，已从仓库移除（保留在学习方法里作对照）。v6 运行中的对应物：提示词 `shared/orbit_mind.js`、人格 `shared/orbit_personas.js`、记忆 `shared/orbit_memory.js`、玩法 `shared/orbit_play.js`；测试见 `docs/31` §10。
+> **2026-11-15 清理说明**：`prompts/`、`workflow/`、`evalset/`、`demo/`、`server/`、`analytics/`、`shared/tide_core.js` 是 v5 服务端版的内容，已从工作区移除，只留在 git 历史里作对照。v6 运行中的对应物：提示词 `shared/orbit_mind.js`、人格 `shared/orbit_personas.js`、记忆 `shared/orbit_memory.js`、玩法 `shared/orbit_play.js`；测试见 `docs/31` §10。
 
 一个**海外 AI 陪伴 App 的完整原型**，用来学习并通过「AI 陪伴产品经理（海外）」岗位的面试。
 包含：安卓 App、自建服务端、数据分析 SQL、自动化测试，以及 PRD / Prompt / RAG / Skills / 工作流 / 市场数据 / 教程等全套文档。
@@ -16,11 +16,13 @@
 
 | | 状态 |
 |---|---|
-| App + 服务端 + SQL + 测试 | ✅ 完整可跑，自动化测试全部通过（见 `TEST_REPORT.md`） |
-| 线上大模型 | 🟡 默认接 DeepSeek（按官方文档配置），**没有用真实 Key 跑过**；质量测试用的是本机 qwen2.5:3b |
-| 服务端部署 | ❌ 没有部署到公网 |
-| 支付 | ❌ 模拟（没接 Google Play Billing） |
-| 用户数据 | ❌ **没有任何真实用户数据**。所有留存、转化数字都只存在于合成测试数据里 |
+| App + 端侧模型 + 测试 | ✅ 可跑：模拟器上真手指点完 167 项 E2E，静态检查 137 + 85 + 4 + 177 项全部通过（见 `docs/31` §10） |
+| 大模型 | ✅ 模型跑在手机里（Qwen2.5-1.5B Q4_K_M），**不需要 Key、不需要联网**。APK 和模型文件不进仓库（体量超 GitHub 上限），见 `android/app/src/main/assets/models/README.md` |
+| 服务端 / 登录 | ❌ v6 没有服务端，也没有登录；v5 的 `server/` 已从仓库移除，仅留在 git 历史里作对照 |
+| 支付 | ❌ 演示模式（没接 Google Play Billing，付费墙不扣费） |
+| 用户数据 | ❌ **没有任何真实用户数据**。留存、转化、A/B 数字只存在于打了 `SYNTHETIC` 水印的合成队列里 |
+
+v6 的「做了 / 只模拟过 / 没做」以 `docs/08_PRD_Orbit_v6.md` 与 `docs/31` 为准；v5 的三栏表保留在 `docs/24_v5当前实现与发布门槛.md`。
 
 完整的"做了 / 只模拟过 / 没做"三栏表：`docs/24_v5当前实现与发布门槛.md`。
 
@@ -30,7 +32,7 @@
 
 | 顺序 | 读什么 | 学到什么 | 时间 |
 |---|---|---|---|
-| 1 | `00_小白教程_用生活比喻看懂潮汐.md` | 整个产品怎么工作（全是生活比喻） | 1 小时 |
+| 1 | `00_小白教程_用生活比喻看懂潮汐.md`（仅本地，未上传） | 整个产品怎么工作（全是生活比喻） | 1 小时 |
 | 2 | `docs/31_Orbit_v6_实现与测试.md`（§10 是最新一轮） | 哪些是真的、哪些不是、真机测出了什么 | 20 分钟 |
 | 3 | `docs/28_工作流文档.md` | 一句话从输入到回复经过哪些环节；需求 → PRD → 复盘 | 40 分钟 |
 | 4 | `docs/08_PRD_Orbit_v6.md` | 一份完整 PRD 长什么样（v5 的 `docs/08_PRD_潮汐Tide_v5.md` 保留作对照） | 40 分钟 |
@@ -43,7 +45,7 @@
 | 11 | `docs/29_市场数据手册.md` | 带来源和可信度等级的市场数据 | 30 分钟 |
 | 12 | `docs/30_JD对照与面试题库.md` | 两份 JD 逐条对照 + 25 道面试题 | 反复练 |
 
-学习方法与三周计划：`15_学习步骤与方法.md`、教程第 14 章。
+学习方法与三周计划：`15_学习步骤与方法.md`、教程第 14 章（两者都仅本地保留，未上传 GitHub）。
 
 ---
 
@@ -59,7 +61,7 @@
 | 会员体验 | 免费 40 / Premium 300、软上限、付费墙不打断情绪（演示版不扣费） |
 | 提示词工程 / 对话上下文 | `docs/25`、`shared/orbit_mind.js`、`shared/orbit_personas.js` |
 | Memory / RAG | `docs/26`、`shared/orbit_memory.js`、`tools/rag_eval.js` |
-| 埋点 / 漏斗 / 留存 / 分群 / A-B | `docs/13`（末尾 v6 一节）、`09_dashboard_boot.js`；v5 的 SQL 版本保留在 `analytics/` |
+| 埋点 / 漏斗 / 留存 / 分群 / A-B | `docs/13`（末尾 v6 一节）、`09_dashboard_boot.js`；v5 的 SQL 版本只在 git 历史里 |
 | 玩法设计 / 从别人的 PRD 取机制 | `docs/32`、`shared/orbit_play.js` |
 | Prompt / Memory / 多模态 / Agent 边界 | `docs/30` §2 |
 | 竞品与市场 | `docs/10`、`docs/29` |
@@ -69,24 +71,22 @@
 ## 4. 目录
 
 ```
-├── 00_小白教程_用生活比喻看懂潮汐.md   ★ 入门（已按 v6 更新，标题沿用旧名）
-├── README.md / TEST_REPORT.md / 15_学习步骤与方法.md / 00_学习路线图_14周.md / 00_体检报告_项目问题清单.md
-├── docs/            产品文档：08 PRD（v6 现行 + v5 对照）、25/26/27/28 提示词·记忆·技能·工作流、
+├── 00_体检报告_项目问题清单.md         早期问题清单与补救记录
+├── README.md / TEST_REPORT.md
+├── 00_小白教程_用生活比喻看懂潮汐.md   ★ 入门（仅本地保留，未上传 GitHub）
+├── 00_学习路线图_14周.md               学习路线（仅本地保留，未上传 GitHub）
+├── 15_学习步骤与方法.md                学习方法与三周计划（仅本地保留，未上传 GitHub）
+├── interview/                          面试材料（仅本地保留，未上传 GitHub）
+├── docs/            产品文档：08 PRD（v6 现行 + v5/v1 对照）、25/26/27/28 提示词·记忆·技能·工作流、
 │                    31 实现与测试（§10 最新）、32 玩法取舍；其余为方法论，开头横幅说明其现状
 ├── shared/          ★ orbit_personas.js 角色 · orbit_mind.js 提示词与守卫 · orbit_memory.js 记忆
 │                    orbit_life.js 主动互动/关系/实验 · orbit_play.js 玩法规则 · market_data.js 行业数据
-│                    tide_core.js（v5 遗留，保留作对照，不参与 v6 运行）
 ├── src/app/         页面：index.html（结构与样式）+ js/01–10 模块（由 tools/build_app.js 拼成单页）
-├── server/          v5 服务端（保留作对照，v6 不运行）
-├── analytics/       v5 的 queries.sql + report.js（SQL 口径与自检，方法论仍可读）
 ├── android/         安卓外壳（WebView + cpp/orbit.cpp 端侧推理 + 语音 + 通知）
-├── tools/           构建、校验、E2E（桌面/模拟器）、玩法单测、检索评测、APK 打包与校验
-├── evalset/         120 例评测集与评测脚本
-├── prompts/ workflow/   提示词与 Dify 工作流教学材料（运行中的提示词以 shared/orbit_mind.js 为准）
-├── interview/       面试材料
-├── demo/            早期规则引擎教学原型（不是产品）
-└── dist/            安装包（当前：Orbit-v6.3.0.apk）
+└── tools/           构建、校验、E2E（桌面/模拟器）、玩法单测、检索评测、APK 打包与校验
 ```
+
+> v5 的 `server/`、`analytics/`、`evalset/`、`prompts/`、`workflow/`、`demo/` 已从工作区移除，只剩 git 历史；`dist/`（APK）和模型文件不入库。
 
 ---
 
